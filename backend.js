@@ -51,7 +51,7 @@ function CustomOperationalTx(wallet, spec) {
       var color_desc = target.color;
       var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
       self.targets.push(new ColorTarget(getScriptFromTargetData(target),
-                                        new ColorValue(colordef, target.value)))
+                                        new ColorValue(colordef, parseInt(target.value, 10))))
   });
 }
 
@@ -139,7 +139,9 @@ function getUnspentCoinsData (data) {
 function createTransferTx(data) {
   return Q.try(function () {
     var opTxS = new CustomOperationalTx(wallet, data);
-    return Q.nfcall(transformTx, composedTx, 'raw', {});    
+    return Q.nfcall(transformTx, opTxS, 'raw', {})
+  }).then(function (tx) {
+    return tx.toHex(true)
   })
 }
 
