@@ -31,18 +31,27 @@ function initializeWallet(done) {
   wallet.once('syncStop', function () { done(wallet); })
 }
 
+function getScriptFromTargetData(target) {
+  var target_script = target.script;
+  if (!target_script) {
+    var target_addr = target.address;
+    if (!target_addr) throw new Error('neither target.script nor target.address is provided');
+    target_script = bitcoin.Address.fromBase58Check(target_addr).toOutputScript().toHex();
+  }
+  return target_script;  
+}
+
 function CustomOperationalTx(wallet, spec) {
   this.wallet = wallet;
   this.spec = spec;
   this.targets = [];
   var self = this;
   if (spec.targets)
-  spec.targets.forEach(function (target) {
-    var color_desc = target.color;
-    if (color_desc === 'bitcoin') color_desc = '';
-    var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
-    self.targets.push(new ColorTarget(target.script,
-                         new ColorValue(colordef, target.value)))
+    spec.targets.forEach(function (target) {
+      var color_desc = target.color;
+      var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
+      self.targets.push(new ColorTarget(getScriptFromTargetData(target),
+                                        new ColorValue(colordef, target.value)))
   });
 }
 
@@ -50,23 +59,20 @@ inherits(CustomOperationalTx, OperationalTx);
 
 CustomOperationalTx.prototype.getChangeAddress = function (colordef) {
   var color_desc = colordef.getDesc();
-  if (color_desc === '') color_desc = 'bitcoin';
   var address = this.spec.change_address[color_desc];
   if (!address)
-    throw Error('Change address is not specified for color: ' + color_desc);
+    throw Error('Change address is not specified for color: "' + color_desc + '"');
   return address;
 };
 
 CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
   var color_desc = colordef.getDesc();
-  var color_name = color_desc;
-  if (color_desc === '') color_name = 'bitcoin';
 
-  if (!this.spec.source_addresses[color_name])
-    throw new Error('source addresses not provided for ' + color_name);
+  if (!this.spec.source_addresses[color_desc])
+    throw new Error('source addresses not provided for "' + color_desc + '"');
   
   return getUnspentCoins(this.wallet, 
-      this.spec.source_addresses[color_name],
+      this.spec.source_addresses[color_desc],
       color_desc).
     then(function (coins) {
       console.log('got coins:', coins)
@@ -111,8 +117,34 @@ function getUnspentCoins(context, addresses, color_desc) {
   })
 }
 
+function getUnspentCoinsData (data) {
+  return Q.try(function () {
+      if (!data.addresses) res.status(400).json({error: "requires addresses"});
+      if (!data.color) res.status(400).json({error: "requires color"});
+      return getUnspentCoins(wallet, data.addresses, data.color);
+  }).then(function (coins) {
+      return Q.all(coins.map(function (coin) {
+          return Q.ninvoke(coin, 'getMainColorValue', null, null).then(
+            function (cv) {
+              var rawCoin = coin.toRawCoin();
+              delete rawCoin['address']; // TODO: detect address properly
+              rawCoin.color = data.color;
+              rawCoin.color_value = cv.getValue();
+              return rawCoin
+            })
+      }))
+  })
+}
+
+function createTransferTx(data) {
+  return Q.try(function () {
+    var opTxS = new CustomOperationalTx(wallet, data);
+    return Q.nfcall(transformTx, composedTx, 'raw', {});    
+  })
+}
+
 function createIssueTx(data) {
-  Q.try(function () {
+  return Q.try(function () {
       if (data.targets && !data.target) {
         if (data.targets.length > 1 || data.targets.length == 0) throw new Error('issuance transaction should have a single target');
         data.target = data.targets[0];
@@ -120,19 +152,13 @@ function createIssueTx(data) {
       }
       if (data.targets) throw new Error('both target and targets fields are set');
       if (!data.target) throw new Error('no target provided');
-      var target_script = data.target.script;
-      if (!target_script) {
-        var target_addr = data.target.address;
-        if (!target_addr) throw new Error('neither target.script nor target.address is provided');
-        target_script = bitcoin.Address.fromBase58Check(target_addr).toOutputScript().toHex();
-      }
 
       var opTxS = new CustomOperationalTx(wallet, {
           source_addresses: data.source_addresses,
           change_address: data.change_address
       });
       opTxS.addTarget(new ColorTarget(
-          target_script,
+          getScriptFromTargetData(data.target),
           new ColorValue(cclib.ColorDefinitionManager.getGenesis(), // genesis output marker
                          parseInt(data.target.value, 10))));
       if (data.color_kernel !== 'epobc') throw new Error('only epobc kernel is supported')
@@ -150,5 +176,7 @@ function createIssueTx(data) {
 
 module.exports = {
   initializeWallet: initializeWallet, 
-  createIssueTx: createIssueTx
+  createIssueTx: createIssueTx,
+  createTransferTx: createTransferTx,
+  getUnspentCoinsData: getUnspentCoinsData
 }
