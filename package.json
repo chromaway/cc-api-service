@@ -1,0 +1,43 @@
+{
+  "version": "0.0.1",
+  "repository": {
+    "url": "git://bitbucket.org/chromawallet/lhv-moneylog.git",
+    "type": "git"
+  },
+  "description": "",
+  "dependencies": {
+    "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.4",
+    "q": "1.1.1",
+    "body": "^4.5.0", 
+    "send-data": "^3.3.3", 
+    "express": "^4.10.6", 
+    "morgan": "^1.5.1", 
+    "cors": "^2.5.2"
+
+  },
+  "scripts": {
+    "coveralls": "npm run-script coverage && coveralls <coverage/lcov.info",
+    "clean": "rm -f lhv-moneylog.js lhv-moneylog.min.js lhv-moneylog.test.js",
+    "lint": "jshint lib/*.js lib/**.js test/*.js && jscs lib/*.js lib/**.js test/*.js",
+    "compile_test": "browserify test/*.js > lhv-moneylog.test.js",
+    "compile": "browserify lib/index.js -s MoneyLog -o lhv-moneylog.js",
+    "build": "npm run-script compile && npm run-script uglify",
+    "coverage": "istanbul cover _mocha -- test/*.js",
+    "test": "istanbul test mocha -- --timeout 120000 --reporter spec test/*.js",
+    "uglify": "uglify -s lhv-moneylog.js -o lhv-moneylog.min.js"
+  },
+  "devDependencies": {
+    "uglify": "0.1.5",
+    "bip39": "2.1.0",
+    "istanbul": "0.3.2",
+    "chai": "1.10.0",
+    "lodash": "2.4.1",
+    "mocha": "2.1.0",
+    "jshint": "2.6.3",
+    "coveralls": "2.11.2",
+    "jscs": "1.11.3",
+    "browserify": "9.0.3"
+  },
+  "main": "./lib/index.js",
+  "name": "cc-tool"
+}
