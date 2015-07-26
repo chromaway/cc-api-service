@@ -6,14 +6,14 @@
   },
   "description": "",
   "dependencies": {
+    "body": "^4.5.0",
     "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.4",
+    "cors": "^2.5.2",
+    "express": "^4.10.6",
+    "morgan": "^1.5.1",
+    "nopt": "^3.0.3",
     "q": "1.1.1",
-    "body": "^4.5.0", 
-    "send-data": "^3.3.3", 
-    "express": "^4.10.6", 
-    "morgan": "^1.5.1", 
-    "cors": "^2.5.2"
-
+    "send-data": "^3.3.3"
   },
   "scripts": {
     "coveralls": "npm run-script coverage && coveralls <coverage/lcov.info",

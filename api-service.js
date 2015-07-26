@@ -34,8 +34,26 @@ defineAPIcall('/createTransferTx', backend.createTransferTx, function (txHex) { 
 
 app.use('/api', api);
 
-backend.initializeWallet(function () {
-    var server = app.listen(4444, function () {
+
+var nopt = require('nopt')
+var args = nopt({testnet: Boolean,
+                 port: Number,
+                 chromanode: String});
+if (!args.port) args.port = 4444;
+if (!args.testnet) args.testnet = false;
+
+var walletOpts = {
+  testnet: args.testnet,
+  blockchain: {name: 'Naive'},
+  storageSaveTimeout: 0
+};
+
+if (args.chromanode) {
+  walletOpts.connector = {opts: {url: args.chromanode}}
+}
+
+backend.initializeWallet(walletOpts, function () {
+    var server = app.listen(args.port, function () {
         console.log('Listening on port %d', server.address().port);
     })
 })

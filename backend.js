@@ -16,15 +16,10 @@ var fs = require('fs')
 
 var wallet = null;
 
-function initializeWallet(done) {
+function initializeWallet(opts, done) {
   var systemAssetDefinitions = [];
 
-  wallet = new WalletCore.Wallet({
-    testnet: true,
-    blockchain: { name: 'Naive' },
-    // connector: {opts: {url: "http://136.243.23.208:5001"}},
-    storageSaveTimeout: 0,
-  });
+  wallet = new WalletCore.Wallet(opts);
   wallet.on('error', function (error) {
     console.log(error.stack || error);
   });
