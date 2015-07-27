@@ -7,9 +7,9 @@ var request = require('request');
 var seed = process.argv[2];
 
 if (!seed) {
-  console.log('seed needs to be provided as an argument')
+  console.log('USAGE:')
+  console.log(require('fs').readFileSync('usage.txt').toString())
   process.exit(1)
-  seed = 'evil';
 }
 
 

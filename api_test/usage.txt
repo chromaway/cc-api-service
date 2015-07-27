@@ -1,0 +1,19 @@
+We need fresh addresses for each test run, thus we require an unique (pseud-random) seed to be passed to the test script.
+Any string can be passed as seed:
+
+   $ node test.js ABCDefgh
+
+The script will output an initial address and the current funding state:
+
+    $ node test.js ABCDefgh
+    n2J6AcQZkF9Facmfte6JTqCmibJ7unfepK
+    { coins: [] }
+    please send some testnet bitcoins to address above
+
+You need to send testnet coins (e.g. from a faucet http://tpfaucet.appspot.com/ ) to the address above. Check the funding state by running script again.
+
+After coins are received, you can run the test:
+
+    $ node test.js ABCDefgh run
+
+The run will generate 4 addresses, issue new coins and transfer them using API.
