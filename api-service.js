@@ -36,6 +36,7 @@ function identity (x) { return x }
 defineAPIcall('/createIssueTx', backend.createIssueTx, identity);
 defineAPIcall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
 defineAPIcall('/createTransferTx', backend.createTransferTx, identity);
+defineAPIcall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
 
 app.use('/api', api);
 

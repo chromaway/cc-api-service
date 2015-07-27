@@ -208,9 +208,39 @@ function createIssueTx(data) {
   })
 }
 
+function broadcastTx(data) {
+  // chromanode returns from transaction/send sooner than it adds
+  // transaction to database, which is undesirable for a high-level API,
+  // so we wait until it is added to chromanode's DB
+
+  return Q.try(function () {
+      var bc = wallet.getBlockchain();
+      var txid = bitcoin.Transaction.fromHex(data.tx).getId();
+      return bc.sendTx(data.tx).then(function () {
+          console.log('sent tx to chromanode, waiting for it to appear...')
+          return Q.Promise(function (resolve, reject) {
+              var tries = 0;
+              function dotry () {
+                console.log("polling " + txid + " " + tries);
+                tries += 1;
+                if (tries > 120) { // give up after 2 minutes
+                  reject(new Error('timeout waiting for chromanode to accept ' + txid))
+                  return
+                } 
+                bc.getTxBlockHash(txid).then(resolve).catch(function () {
+                    Q.delay(1000).then(dotry)
+                })
+              }      
+              dotry();
+          })
+      })
+  })
+}
+
 module.exports = {
   initializeWallet: initializeWallet, 
   createIssueTx: createIssueTx,
   createTransferTx: createTransferTx,
-  getUnspentCoinsData: getUnspentCoinsData
+  getUnspentCoinsData: getUnspentCoinsData,
+  broadcastTx: broadcastTx
 }

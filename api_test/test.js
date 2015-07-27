@@ -73,7 +73,10 @@ if (command === 'show') {
     })
     var tx = txb.build();
     console.log(tx.toHex());
-    
+    api_call('broadcastTx', {tx: tx.toHex() }, function (err, res) {
+      if (err) { console.log(err); process.exit(0) }
+      console.log(res)
+    })
   })
 }
 
