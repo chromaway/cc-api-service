@@ -21,16 +21,21 @@ function defineAPIcall(name, computeFn, formatFn) {
       else {
         computeFn(body).done(
           function (result) { res.json(formatFn(result))},
-          function (err) { res.status(500).json({error: err.toString()}) }
+          function (err) { 
+            console.error(err)
+            res.status(500).json({error: err.toString()}) 
+          }
         );
       }
     })
   })
 }
 
-defineAPIcall('/createIssueTx', backend.createIssueTx, function (txHex) { return {tx: txHex} });
+function identity (x) { return x }
+
+defineAPIcall('/createIssueTx', backend.createIssueTx, identity);
 defineAPIcall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
-defineAPIcall('/createTransferTx', backend.createTransferTx, function (txHex) { return {tx: txHex} });
+defineAPIcall('/createTransferTx', backend.createTransferTx, identity);
 
 app.use('/api', api);
 
