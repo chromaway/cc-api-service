@@ -55,15 +55,26 @@ if (command === 'show') {
       process.exit(0)
     })
 } else {
-  api_call('createIssueTx', {
+  var params = {
     source_addresses: { "": [getaddress(0)] },
     change_address: { "": getaddress(1) },
     target: {address: getaddress(2), value: 1000},
     color_kernel: 'epobc'
-  }, function (err, res) {
-    console.log(err, res)
-    if (err) process.exit(0)
-    var txb = bitcoin.TransactionBuilder.fromTransaction(bitcoin.Transaction.fromHex(res.tx))
+  }
+  console.log('Create Issue Transaction:')
+  console.log(params)
+
+  api_call('createIssueTx', params, function (err, res) {
+    if (err) {
+      console.log('CreateIssueTx returned error:', err)
+      process.exit(0)
+    }
+    console.log('CreateIssueTx result:', res)
+
+    var transaction = bitcoin.Transaction.fromHex(res.tx)
+
+    var txb = bitcoin.TransactionBuilder.fromTransaction(transaction)
+
     res.input_coins.forEach(function (coin, index) {
       var key = address_key_map[coin.address]
       if (!key) {
@@ -73,12 +84,17 @@ if (command === 'show') {
       txb.sign(index, key)
     })
     var tx = txb.build()
+    console.log('Transaction builder created transaction:')
     console.log(tx.toHex())
+
+    console.log('Now broadcasting the transaction')
     api_call('broadcastTx', {tx: tx.toHex() }, function (err, res) {
       if (err) {
+        console.log('broadcastTx returned an error')
         console.log(err)
         process.exit(0)
       }
+      console.log('broadcastTx returned this result:')
       console.log(res)
     })
   })
