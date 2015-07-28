@@ -97,7 +97,6 @@ function getUnspentCoins(context, addresses, color_desc) {
 
   var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
   return bc.addressesQuery(addresses, {status: 'unspent'}).then(function (res) {
-    console.log(res);
     return Q.all(res.unspent.map(function (unspent) {
       var cvQ = null;
       if (colordef.getColorType() === 'uncolored') 
@@ -116,6 +115,7 @@ function getUnspentCoins(context, addresses, color_desc) {
         address = addresses[0];
 
       return cvQ.then(function (cv) {
+          if (cv === null) return null;
           var coin = new Coin({
                   txId: unspent.txid,
                   outIndex: unspent.vount,
@@ -129,7 +129,9 @@ function getUnspentCoins(context, addresses, color_desc) {
           add_coin_to_cache(coin);
           return coin;
         })
-    }))
+    })).then(function (coins) {
+      return _.filter(coins);
+    })
   })
 }
 
