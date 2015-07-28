@@ -17,3 +17,17 @@ After coins are received, you can run the test:
     $ node test.js ABCDefgh run
 
 The run will generate 4 addresses, issue new coins and transfer them using API.
+
+
+Parameters:
+
+  --url= Full url to server endpoint, end with /, defaults to http://localhost:4444/api/
+  
+  Use like this:
+  
+      node test.js ABCdef --url=http://myserver:4444/api/
+
+  --seed= optional way to specify the seed
+  
+  --command = optional way to specify the command ('show' or 'run')
+  
