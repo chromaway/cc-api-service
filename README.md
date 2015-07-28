@@ -1,5 +1,6 @@
 # cc-api-service
 
+
 Provides a REST API for ChromaWallet colored coin libraries: construct transactions, broadcast transactions, query data.
 
 Run:
@@ -7,6 +8,9 @@ Run:
     npm install
     node api-service.js --port 4444 --testnet
 
+Test:
+
+See [instructions](api_test/usage.txt)
 
 ## Command-line options
 
