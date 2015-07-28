@@ -149,3 +149,22 @@ Note: "value" is bitcoin value of output, "color_value" is colorvalue for "color
 
 _Not implemented yet_. Should report all current unspent coins for a particular color (e.g. all asset owners). Currently this information can be obtained from [cc-scanner](https://github.com/chromaway/cc-scanner) which assembles it into a PostgreSQL database.
 
+## Samples
+
+In `api_samples` directory you can find sample input data and a script to run it against the service. E.g.
+
+    $ node run.js createIssueTx
+    
+You can also provide custom JSON file:
+
+    $ node run.js createIssueTx my-issue-tx-spec.json
+    
+Script assumes that service is accessible via http://localhost:4444/
+
+## Test script
+
+Test script contains code which issues new colors, signs and broadcasts transactions, etc.
+
+See [usage](https://github.com/chromaway/cc-api-service/blob/master/api_test/usage.txt).
+
+Script assumes that service is accessible via http://localhost:4444/
