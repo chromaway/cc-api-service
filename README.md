@@ -10,7 +10,7 @@ Run:
 
 Test:
 
-See [instructions](api_test/usage.txt)
+See [instructions](#test-script)
 
 ## Command-line options
 
@@ -71,7 +71,7 @@ change_address | address used for a change if coins are not spent fully
 target | should include "address" (or "script") and "value"
 color_kernel | should be "epobc"
 
-[Sample input](https://github.com/chromaway/cc-api-service/blob/master/api_samples/createIssueTx.json).
+[Sample input](api_samples/createIssueTx.json).
 
 Sample output  (shortened):
 
@@ -100,7 +100,7 @@ source_addresses | source for bitcoins and colored coins
 change_address | address used for a change if coins are not spent fully
 targets | see description in 'General conventions' section
 
-[Sample input](https://github.com/chromaway/cc-api-service/blob/master/api_samples/createTransferTx.json).
+[Sample input](api_samples/createTransferTx.json).
 
 Sample output: similar to output of `createIssueTx`.
 
@@ -135,7 +135,7 @@ This can be a problem if applications uses same address both for colored and unc
 
 Future versions will allow retrieving data for all colors at once, also correctly differentiate colored/uncolored coins. (Requires migration to coloredcoinjs-lib v4).
 
-[Sample input](https://github.com/chromaway/cc-api-service/blob/master/api_samples/getUnspentCoins.json)
+[Sample input](api_samples/getUnspentCoins.json)
 
 Sample output:
 
