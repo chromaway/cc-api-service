@@ -108,6 +108,7 @@ function checkError(msg) {
 
 function pinger(ws) {
   var timer = setInterval(function() {
+    log("Ping: " + (new Date).toLocaleString());
     if (ws.readyState == 1) {
       ws.send(JSON.stringify({event: "ping"}));
     }
