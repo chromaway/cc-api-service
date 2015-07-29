@@ -19,7 +19,7 @@
   "scripts": {
     "serve": "node ./api-service.js",
     "coverage": "istanbul cover _mocha -- api_test/auto-test.js",
-    "coveralls": "npm run coverage"
+    "coveralls": "npm run-script coverage && coveralls <coverage/lcov.info"
   },
   "devDependencies": {
     "bip39": "2.1.0",
