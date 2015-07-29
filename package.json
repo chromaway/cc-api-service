@@ -18,7 +18,7 @@
   },
   "scripts": {
     "serve": "node ./api-service.js",
-    "coverage": "istanbul cover -x '**/api_test/**' _mocha -- api_test/auto-test.js",
+    "coverage": "istanbul cover -x '**/api_test/**' _mocha -- api_test/test.js",
     "coveralls": "npm run-script coverage && coveralls <coverage/lcov.info"
   },
   "devDependencies": {
