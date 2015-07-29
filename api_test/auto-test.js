@@ -31,10 +31,13 @@ function getaddress(i) {
 function api_call(method, data, cb) {
   request({method: 'post', uri: base_uri + method, body: data, json: true},
   function (err, response, body) {
-    if (err) console.log(err)
+    if (err) {
+      console.log("Post to api error:", err)
+      cb(err, null);
+    }
     else if (response.statusCode !== 200) {
       console.log('ERROR', response.statusCode, body)
-      process.exit(1)
+      cb(err, null);
     } else {
       cb(null, body)
     }
