@@ -158,12 +158,13 @@ function main() {
 if (global.describe) {
   describe('API-test', function() {
     this.timeout(1000 * 60 * 40); //40 minutes
+    var server;
     it('main functional test', function (done) {
       var args = {
         port: 5555,
         testnet: true
       }
-      var server = require('../server')
+      server = require('../server')
 
       base_uri = 'http://localhost:' + args.port + '/api/';
       command = 'autotest';
@@ -178,6 +179,9 @@ if (global.describe) {
         throw(new Error("Build failed"));
       }
       )
+    });
+    after(function () {
+      server.stopService();
     });
   });
 }

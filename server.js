@@ -40,7 +40,7 @@ defineAPIcall('/createTransferTx', backend.createTransferTx, identity);
 defineAPIcall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
 
 app.use('/api', api);
-
+var server;
 var startService = function (args) {
   var deferred = Q.defer()
   var walletOpts = {
@@ -57,14 +57,19 @@ var startService = function (args) {
   }
 
   backend.initializeWallet(walletOpts, function () {
-    var server = app.listen(args.port, function () {
+    server = app.listen(args.port, function () {
                    console.log('Listening on port %d', server.address().port);
                    deferred.resolve();
                  })
   })
   return deferred.promise
 }
+var stopService =  function () {
+  if (server) server.close()
+  server = null
+}
 
 module.exports = {
-  startService: startService
+  startService: startService,
+  stopService: stopService
 }
