@@ -171,9 +171,13 @@ if (global.describe) {
 
       server.startService(args)
       .then(main)
-      .then(function () {
+      .done(function () {
         done()
-      })
+      },
+      function () {
+        throw(new Error("Build failed"));
+      }
+      )
     });
   });
 }
