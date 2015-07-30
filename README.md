@@ -13,14 +13,13 @@ Test:
 See [instructions](#test-script)
 
 
-##
-[![Build Status](https://travis-ci.org/chromaway/cc-api-service.svg?branch=master)](https://travis-ci.org/chromaway/cc-api-service) [![Coverage Status](https://coveralls.io/repos/chromaway/cc-api-service/badge.png)](https://coveralls.io/r/chromaway/cc-api-service) [![Dependency status](https://david-dm.org/chromaway/cc-api-service/status.png)](https://david-dm.org/chromaway/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/chromaway/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
+[![Build Status](https://travis-ci.org/chromaway/cc-api-service.svg?branch=master)](https://travis-ci.org/chromaway/cc-api-service) [![Coverage Status](https://coveralls.io/repos/chromaway/cc-api-service/badge.svg?branch=master&service=github)](https://coveralls.io/github/chromaway/cc-api-service?branch=master) [![Dependency status](https://david-dm.org/chromaway/cc-api-service/status.png)](https://david-dm.org/chromaway/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/chromaway/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
 
 Developer fork:
 
 * Hankhero
 
-[![Build Status](https://travis-ci.org/hankhero/cc-api-service.svg?branch=master)](https://travis-ci.org/hankhero/cc-api-service) [![Coverage Status](https://coveralls.io/repos/hankhero/cc-api-service/badge.png)](https://coveralls.io/r/hankhero/cc-api-service) [![Dependency status](https://david-dm.org/hankhero/cc-api-service/status.png)](https://david-dm.org/hankhero/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/hankhero/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
+[![Build Status](https://travis-ci.org/hankhero/cc-api-service.svg?branch=master)](https://travis-ci.org/hankhero/cc-api-service) [![Coverage Status](https://coveralls.io/repos/hankhero/cc-api-service/badge.svg?branch=master&service=github)](https://coveralls.io/r/hankhero/cc-api-service?branch=master) [![Dependency status](https://david-dm.org/hankhero/cc-api-service/status.png)](https://david-dm.org/hankhero/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/hankhero/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
 
 
 ## Command-line options
