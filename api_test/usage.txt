@@ -1,11 +1,11 @@
 We need fresh addresses for each test run, thus we require an unique (pseud-random) seed to be passed to the test script.
 Any string can be passed as seed:
 
-   $ node test.js ABCDefgh
+   $ node test.js ABCDefgh show
 
 The script will output an initial address and the current funding state:
 
-    $ node test.js ABCDefgh
+    $ node test.js ABCDefgh show
     n2J6AcQZkF9Facmfte6JTqCmibJ7unfepK
     { coins: [] }
     please send some testnet bitcoins to address above
@@ -25,7 +25,7 @@ Parameters:
   
   Use like this:
   
-      node test.js ABCdef --url=http://myserver:4444/api/
+      node test.js ABCdef show --url=http://myserver:4444/api/
 
   --seed= optional way to specify the seed
   

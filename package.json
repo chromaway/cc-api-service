@@ -17,20 +17,24 @@
     "send-data": "^3.3.3"
   },
   "scripts": {
-      "serve": "node ./api-service.js"
+    "serve": "node ./api-service.js",
+    "coverage": "istanbul cover -x '**/api_test/**' _mocha -- api_test/test.js",
+    "coveralls": "npm run-script coverage && coveralls <coverage/lcov.info"
   },
   "devDependencies": {
-  "request": "2.60.0",
-  "uglify": "0.1.5",
-  "bip39": "2.1.0",
-  "istanbul": "0.3.2",
-  "chai": "1.10.0",
-  "lodash": "2.4.1",
-  "mocha": "2.1.0",
-  "jshint": "2.6.3",
-  "coveralls": "2.11.2",
-  "jscs": "1.11.3",
-  "browserify": "9.0.3"
+    "bip39": "2.1.0",
+    "bitcoinjs-lib": "^1.5.7",
+    "browserify": "9.0.3",
+    "chai": "1.10.0",
+    "coveralls": "2.11.2",
+    "istanbul": "0.3.2",
+    "jscs": "1.11.3",
+    "jshint": "2.6.3",
+    "lodash": "2.4.1",
+    "mocha": "2.1.0",
+    "request": "2.60.0",
+    "uglify": "0.1.5",
+    "ws": "^0.7.2"
   },
   "main": "./api-service.js",
   "name": "cc-api-service"

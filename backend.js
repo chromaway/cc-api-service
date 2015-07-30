@@ -229,8 +229,8 @@ function broadcastTx(data) {
                   reject(new Error('timeout waiting for chromanode to accept ' + txid))
                   return
                 } 
-                bc.getTxBlockHash(txid).then(resolve).catch(function () {
-                    Q.delay(1000).then(dotry)
+                bc.getTxBlockHash(txid).done(resolve, function () {
+                    Q.delay(1000).done(dotry)
                 })
               }      
               dotry();
