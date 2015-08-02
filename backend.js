@@ -13,6 +13,8 @@ var inherits = require('util').inherits;
 var BIP39 = require('bip39');
 var _ = require('lodash')
 var fs = require('fs')
+var parambulator = require('parambulator')
+
 
 var wallet = null;
 var scannerUrl;
@@ -52,24 +54,27 @@ function getScriptFromTargetData(target) {
   var target_script = target.script;
   if (!target_script) {
     var target_addr = target.address;
-    if (!target_addr) throw new Error('neither target.script nor target.address is provided');
+    if (!target_addr)
+      throw new Error('neither target.script nor target.address is provided');
     target_script = bitcoin.Address.fromBase58Check(target_addr).toOutputScript().toHex();
   }
   return target_script;  
 }
 
 function CustomOperationalTx(wallet, spec) {
-  this.wallet = wallet;
-  this.spec = spec;
-  this.targets = [];
-  var self = this;
+  this.wallet = wallet
+  this.spec = spec
+  this.targets = []
+  var self = this
   if (spec.targets)
     spec.targets.forEach(function (target) {
-      var color_desc = target.color;
-      var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
-      self.targets.push(new ColorTarget(getScriptFromTargetData(target),
-                                        new ColorValue(colordef, parseInt(target.value, 10))))
-  });
+      var color_desc = target.color
+      var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc)
+
+      var colorValue = new ColorValue(colordef, parseInt(target.value, 10))
+      var colorTarget = new ColorTarget(getScriptFromTargetData(target), colorValue)
+      self.targets.push(colorTarget)
+    })
 }
 
 inherits(CustomOperationalTx, OperationalTx);
@@ -89,11 +94,11 @@ CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
     throw new Error('source addresses not provided for "' + color_desc + '"');
   
   return getUnspentCoins(this.wallet, 
-      this.spec.source_addresses[color_desc],
-      color_desc).
-    then(function (coins) {
-      console.log('got coins:', coins)
-      return new CoinList(coins)
+    this.spec.source_addresses[color_desc],
+    color_desc)
+  .then(function (coins) {
+    console.log('got coins:', coins)
+    return new CoinList(coins)
   })
 };
 
@@ -111,7 +116,7 @@ function getUnspentCoins(context, addresses, color_desc) {
   return bc.addressesQuery(addresses, {status: 'unspent'}).then(function (res) {
     return Q.all(res.unspent.map(function (unspent) {
       var cvQ = null;
-      if (colordef.getColorType() === 'uncolored') 
+      if (colordef.getColorType() === 'uncolored')
         cvQ = Q(new ColorValue(colordef, parseInt(unspent.value, 10)))
       else
         cvQ = Q.ninvoke(cd, 'getCoinColorValue',
@@ -127,20 +132,20 @@ function getUnspentCoins(context, addresses, color_desc) {
         address = addresses[0];
 
       return cvQ.then(function (cv) {
-          if (cv === null) return null;
-          var coin = new Coin({
-                  txId: unspent.txid,
-                  outIndex: unspent.vount,
-                  value: parseInt(unspent.value, 10),
-                  script: unspent.script,
-                  address: address
-              }, {
-                isAvailable: true,
-                getCoinMainColorValue: cv
-              });
-          add_coin_to_cache(coin);
-          return coin;
-        })
+        if (cv === null) return null;
+        var coin = new Coin({
+                txId: unspent.txid,
+                outIndex: unspent.vount,
+                value: parseInt(unspent.value, 10),
+                script: unspent.script,
+                address: address
+            }, {
+              isAvailable: true,
+              getCoinMainColorValue: cv
+            });
+        add_coin_to_cache(coin);
+        return coin;
+      })
     })).then(function (coins) {
       return _.filter(coins);
     })
@@ -149,33 +154,63 @@ function getUnspentCoins(context, addresses, color_desc) {
 
 function getUnspentCoinsData (data) {
   return Q.try(function () {
-      if (!data.addresses) throw new Error("requires addresses")
-      if (typeof data.color === 'undefined') 
-        throw new Error("requires color");
-      return getUnspentCoins(wallet, data.addresses, data.color);
+    if (!data.addresses) throw new Error("requires addresses")
+    if (typeof data.color === 'undefined') 
+      throw new Error("requires color");
+    return getUnspentCoins(wallet, data.addresses, data.color);
   }).then(function (coins) {
-      return Q.all(coins.map(function (coin) {
-          return Q.ninvoke(coin, 'getMainColorValue', null, null).then(
-            function (cv) {
-              var rawCoin = coin.toRawCoin();
-              delete rawCoin['address']; // TODO: detect address properly
-              rawCoin.color = data.color;
-              rawCoin.color_value = cv.getValue();
-              return rawCoin
-            })
-      }))
+    return Q.all(coins.map(function (coin) {
+        return Q.ninvoke(coin, 'getMainColorValue', null, null).then(
+          function (cv) {
+            var rawCoin = coin.toRawCoin();
+            delete rawCoin['address']; // TODO: detect address properly
+            rawCoin.color = data.color;
+            rawCoin.color_value = cv.getValue();
+            return rawCoin
+          })
+    }))
   })
 }
 
+
+var createTransferTxParamCheck = parambulator(
+  {
+    required$: ['targets','source_addresses', 'change_address'],
+    targets: {
+      type$:'array',
+      '**': {
+        'address': { type$:'string' },
+        'color': { type$:'string' },
+        'value': {  type$:'integer' }
+      }
+    },
+    source_addresses: {
+      '*': {type$: 'array'}
+    },
+    change_address: {
+      '*': {type$: 'string'}
+    }
+  }
+)
+
+function validateCreateTransferTx(data) {
+  var deferred = Q.defer()
+  var callback = deferred.makeNodeResolver()
+  createTransferTxParamCheck.validate(data, callback)
+  return deferred.promise;
+}
+
 function createTransferTx(data) {
-  return Q.try(function () {
-    var opTxS = new CustomOperationalTx(wallet, data);
-    return Q.nfcall(transformTx, opTxS, 'composed', {})
-  }).then(function (composedTx) {
-    return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
-      return { tx: tx.toHex(true),
-               input_coins: composedTx.getTxIns().map(function (txin) {
-                   var coin = find_cached_coin(txin.txId, txin.outIndex);
+  return validateCreateTransferTx(data)
+  .then(function () {
+      var opTxS = new CustomOperationalTx(wallet, data);
+      return Q.nfcall(transformTx, opTxS, 'composed', {})
+    })
+  .then(function (composedTx) {
+      return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
+               return {
+                 tx: tx.toHex(true),
+                 input_coins: composedTx.getTxIns().map(function (txin) {                        var coin = find_cached_coin(txin.txId, txin.outIndex);
                    if (coin) return coin.toRawCoin();
                    else return null;
                })
@@ -186,39 +221,38 @@ function createTransferTx(data) {
 
 function createIssueTx(data) {
   return Q.try(function () {
-      if (data.targets && !data.target) {
-        if (data.targets.length > 1 || data.targets.length == 0) throw new Error('issuance transaction should have a single target');
-        data.target = data.targets[0];
-        delete data['targets'];
-      }
-      if (data.targets) throw new Error('both target and targets fields are set');
-      if (!data.target) throw new Error('no target provided');
+    if (data.targets && !data.target) {
+      if (data.targets.length > 1 || data.targets.length == 0) throw new Error('issuance transaction should have a single target');
+      data.target = data.targets[0];
+      delete data['targets'];
+    }
+    if (data.targets) throw new Error('both target and targets fields are set');
+    if (!data.target) throw new Error('no target provided');
 
-      var opTxS = new CustomOperationalTx(wallet, {
-          source_addresses: data.source_addresses,
-          change_address: data.change_address
-      });
-      opTxS.addTarget(new ColorTarget(
-          getScriptFromTargetData(data.target),
-          new ColorValue(cclib.ColorDefinitionManager.getGenesis(), // genesis output marker
-                         parseInt(data.target.value, 10))));
-      if (data.color_kernel !== 'epobc') throw new Error('only epobc kernel is supported')
-      var cdefCls = cclib.ColorDefinitionManager.getColorDefenitionClsForType('epobc');
-      console.log('compose...')
-      return Q.nfcall(cdefCls.composeGenesisTx, opTxS).then(function (composedTx) {
-          console.log('transforming to raw...')
-          return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
-            console.log('done');
-            return { tx: tx.toHex(true),
-                     input_coins: composedTx.getTxIns().map(function (txin) {
-                         var coin = find_cached_coin(txin.txId, txin.outIndex);
-                         if (coin) return coin.toRawCoin();
-                         else return null;
-                     })
-                   }
-              
-          })
-      })
+    var opTxS = new CustomOperationalTx(wallet, {
+        source_addresses: data.source_addresses,
+        change_address: data.change_address
+    });
+    opTxS.addTarget(new ColorTarget(
+        getScriptFromTargetData(data.target),
+        new ColorValue(cclib.ColorDefinitionManager.getGenesis(), // genesis output marker
+                       parseInt(data.target.value, 10))));
+    if (data.color_kernel !== 'epobc') throw new Error('only epobc kernel is supported')
+    var cdefCls = cclib.ColorDefinitionManager.getColorDefenitionClsForType('epobc');
+    console.log('compose...')
+    return Q.nfcall(cdefCls.composeGenesisTx, opTxS).then(function (composedTx) {
+        console.log('transforming to raw...')
+        return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
+          console.log('done');
+          return { tx: tx.toHex(true),
+                   input_coins: composedTx.getTxIns().map(function (txin) {
+                       var coin = find_cached_coin(txin.txId, txin.outIndex);
+                       if (coin) return coin.toRawCoin();
+                       else return null;
+                   })
+                 }
+        })
+    })
   })
 }
 
