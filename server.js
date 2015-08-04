@@ -5,6 +5,7 @@ var sendJson = require('send-data/json');
 var cors = require('cors');
 var logger = require('morgan');
 var backend = require('./backend')
+var _ = require('lodash')
 
 var app = express();
 
@@ -41,22 +42,35 @@ defineAPIcall('/broadcastTx', backend.broadcastTx, function () { return {success
 
 app.use('/api', api);
 var server;
+
 var startService = function (args) {
   var deferred = Q.defer()
+
+  var defaults = {
+    testnet: false,
+    port: 4444,
+    scanner: 'http://scanner-btc.chromanode.net/api/',
+    testnetScanner: 'http://scanner-tbtc.chromanode.net/api/'
+  }
+
+  args = _.extend(defaults, args);
+
   var walletOpts = {
     testnet: args.testnet,
     blockchain: {name: 'Naive'},
     storageSaveTimeout: 0
   };
 
-  if (!args.port) args.port = 4444;
-  if (!args.testnet) args.testnet = false;
-
   if (args.chromanode) {
     walletOpts.connector = {opts: {url: args.chromanode}}
   }
 
-  backend.initializeWallet(walletOpts, function () {
+  var opts = {
+      walletOpts: walletOpts,
+      scannerUrl: args.testnet ? args.testnetScanner : args.scanner
+  }
+
+  backend.initialize(opts, function () {
     server = app.listen(args.port, function () {
                    console.log('Listening on port %d', server.address().port);
                    deferred.resolve();

@@ -15,8 +15,9 @@ var _ = require('lodash')
 var fs = require('fs')
 
 var wallet = null;
-
+var scannerUrl;
 var coin_cache = {};
+
 function add_coin_to_cache(coin) {
   // txid:outindex is the key
   coin_cache[coin.toString()] = coin;
@@ -35,6 +36,17 @@ function initializeWallet(opts, done) {
   });
   wallet.once('syncStop', function () { done(wallet); })
 }
+
+function initializeScanner(url) {
+  console.log("cc-scanner url: " + url);
+  var scannerUrl = url;
+}
+
+function initialize(opts, done) {
+  initializeScanner(opts.scannerUrl);
+  initializeWallet(opts.walletOpts, done);
+}
+
 
 function getScriptFromTargetData(target) {
   var target_script = target.script;
@@ -240,7 +252,7 @@ function broadcastTx(data) {
 }
 
 module.exports = {
-  initializeWallet: initializeWallet, 
+  initialize: initialize, 
   createIssueTx: createIssueTx,
   createTransferTx: createTransferTx,
   getUnspentCoinsData: getUnspentCoinsData,

@@ -24,11 +24,13 @@ Developer fork:
 
 ## Command-line options
 
-Parameter | Meaning
-----------|------------------------------------
-port      | service port, defaults to 4444
-testnet   | testnet or mainnet mode, defaults to mainnet
-chromanode| chromanode URL, defaults to v1.livenet.bitcoin.chromanode.net
+Parameter      | Meaning
+---------------|------------------------------------
+port           | service port, defaults to 4444
+testnet        | testnet or mainnet mode, defaults to mainnet
+chromanode     | chromanode URL, defaults to v1.livenet.bitcoin.chromanode.net
+scanner        | cc-scanner URL, defaults to http://scanner-btc.chromanode.net/api/
+testnetScanner | like above but if testnet, http://scanner-tbtc.chromanode.net/api/
 
 ## API calls
 
