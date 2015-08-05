@@ -19,6 +19,7 @@ var request = require('request')
 
 var wallet = null;
 var scannerUrl;
+var chromaNodeUrl;
 var coin_cache = {};
 
 function add_coin_to_cache(coin) {
@@ -42,12 +43,28 @@ function initializeWallet(opts, done) {
 
 function initializeScanner(url) {
   console.log("cc-scanner url: " + url);
+  
   scannerUrl = url;
 }
 
 function initialize(opts, done) {
   initializeScanner(opts.scannerUrl);
   initializeWallet(opts.walletOpts, done);
+
+  // Temporary solution until v2 of api is deployed correctly.
+  // Then we could do something like this instead
+  // Add a package dependency:
+  //     "blockchain-js": "git://github.com/chromaway/blockchainjs.git",
+  // 
+  // var urlList = require('blockchainjs').connector.Chromanode.getSources('livenet')
+  // chromaNodeUrl = urlList[0];
+  //
+  chromaNodeUrl = 'http://136.243.23.208:25002'; //TODO DO THIS FOR REAL
+  if (opts.testnet)
+    chromaNodeUrl = 'http://136.243.23.208:25001'; //TODO DO THIS FOR REAL
+
+  console.log('WARNING and TODO: This version hase a hardcoded chromaNodeUrl: ' + chromaNodeUrl);
+
 }
 
 
@@ -262,18 +279,57 @@ var getAllColoredCoinsParamCheck = parambulator(
   {
     required$: ['color_desc'],
     color_desc: {type$: 'string'},
-    unspent: {type$: 'boolean'}
+    unspent: {type$: 'string', enum$:['true','false']}
   }
 )
+
+function checkUnspent(tx) {
+  var txid = tx.txid;
+  var oidx = tx.oidx;
+  var value = tx.value;
+
+  var path = '/v2/transactions/spent'
+  var query = '?otxid=' + txid +'&oindex=' +oidx;
+  var url = chromaNodeUrl + path + query;
+
+  var deferred = Q.defer()
+
+  request(url,
+    function (error, response, body) {
+      if (error) {
+        deferred.reject(error);
+      }
+      if (response.statusCode == 200) {
+        var answer = JSON.parse(body)
+        if (answer.status !== 'fail') {
+          var spent = answer.data.spent
+          deferred.resolve(spent ? null : tx);
+          return
+        }
+      }
+      deferred.reject(
+        new Error('ChromaNode error at:' + url
+                 + ' , code:' + response.statusCode))
+    })
+  return deferred.promise;
+}
+
+function filterUnspent(data) {
+  var txList = data.coins || [];
+  return Q.all(_.map(txList, checkUnspent))
+  .then(function(newTxList) {
+    return {
+      coins: _.compact(newTxList)
+    }
+  })
+};
 
 function getAllColoredCoins(data) {
 //  getAllColoredCoins, basically just call cc-scanner API getAllColoredCoins.
 //
-//  Additionally, caller might request only unspent coins (using 'unspent' parameter), in that case we need to additionally filter coins using chromanode /transactions/unspent API
+//  Additionally, caller might request only unspent coins (using 'unspent' parameter), 
+//  in that case we need to additionally filter coins using chromanode /transactions/spent API
 //
-//  cc-scanner API example (all Cuber transactions):
-//
-//  http://scanner-btc.chromanode.net/api/getAllColoredCoins?color_desc=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0
   return validateParams(data, getAllColoredCoinsParamCheck)
   .then(function () {
            var color_desc = data.color_desc
@@ -285,12 +341,19 @@ function getAllColoredCoins(data) {
                  deferred.reject(error);
                }
                if (response.statusCode == 200) {
-                 var unspent = data.unspent
+                 var unspent = (data.unspent === 'true')
+                 var answer = JSON.parse(body)
                  if (unspent) {
-                   deferred.reject(
-                     new Error('NOT IMPLEMENTED YET'))
+                   filterUnspent(answer)
+                   .fail(function (reason) {
+                     deferred.reject(reason)
+                   })
+                   .done(function (filtered) {
+                     deferred.resolve(filtered);
+                   })
+                 } else {
+                   deferred.resolve(answer);
                  }
-                 deferred.resolve(JSON.parse(body));
                } else {
                  console.error('cc-scanner returned this:' + body);
                  deferred.reject(
