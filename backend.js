@@ -14,6 +14,7 @@ var BIP39 = require('bip39');
 var _ = require('lodash')
 var fs = require('fs')
 var parambulator = require('parambulator')
+var request = require('request')
 
 
 var wallet = null;
@@ -41,7 +42,7 @@ function initializeWallet(opts, done) {
 
 function initializeScanner(url) {
   console.log("cc-scanner url: " + url);
-  var scannerUrl = url;
+  scannerUrl = url;
 }
 
 function initialize(opts, done) {
@@ -58,7 +59,7 @@ function getScriptFromTargetData(target) {
       throw new Error('neither target.script nor target.address is provided');
     target_script = bitcoin.Address.fromBase58Check(target_addr).toOutputScript().toHex();
   }
-  return target_script;  
+  return target_script;
 }
 
 function CustomOperationalTx(wallet, spec) {
@@ -92,8 +93,8 @@ CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
 
   if (!this.spec.source_addresses[color_desc])
     throw new Error('source addresses not provided for "' + color_desc + '"');
-  
-  return getUnspentCoins(this.wallet, 
+
+  return getUnspentCoins(this.wallet,
     this.spec.source_addresses[color_desc],
     color_desc)
   .then(function (coins) {
@@ -125,7 +126,7 @@ function getUnspentCoins(context, addresses, color_desc) {
 
 
       var script = bitcoin.Script.fromHex(unspent.script);
-      var addresses = bitcoin.util.getAddressesFromScript(script, 
+      var addresses = bitcoin.util.getAddressesFromScript(script,
                                                           context.getBitcoinNetwork());
       var address = '';
       if (addresses.length === 1)
@@ -155,7 +156,7 @@ function getUnspentCoins(context, addresses, color_desc) {
 function getUnspentCoinsData (data) {
   return Q.try(function () {
     if (!data.addresses) throw new Error("requires addresses")
-    if (typeof data.color === 'undefined') 
+    if (typeof data.color === 'undefined')
       throw new Error("requires color");
     return getUnspentCoins(wallet, data.addresses, data.color);
   }).then(function (coins) {
@@ -193,15 +194,15 @@ var createTransferTxParamCheck = parambulator(
   }
 )
 
-function validateCreateTransferTx(data) {
+function validateParams(data, paramCheck) {
   var deferred = Q.defer()
   var callback = deferred.makeNodeResolver()
-  createTransferTxParamCheck.validate(data, callback)
+  paramCheck.validate(data, callback)
   return deferred.promise;
 }
 
 function createTransferTx(data) {
-  return validateCreateTransferTx(data)
+  return validateParams(data, createTransferTxParamCheck)
   .then(function () {
       var opTxS = new CustomOperationalTx(wallet, data);
       return Q.nfcall(transformTx, opTxS, 'composed', {})
@@ -210,7 +211,8 @@ function createTransferTx(data) {
       return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
                return {
                  tx: tx.toHex(true),
-                 input_coins: composedTx.getTxIns().map(function (txin) {                        var coin = find_cached_coin(txin.txId, txin.outIndex);
+                 input_coins: composedTx.getTxIns().map(function (txin) {
+                   var coin = find_cached_coin(txin.txId, txin.outIndex);
                    if (coin) return coin.toRawCoin();
                    else return null;
                })
@@ -256,6 +258,49 @@ function createIssueTx(data) {
   })
 }
 
+var getAllColoredCoinsParamCheck = parambulator(
+  {
+    required$: ['color_desc'],
+    color_desc: {type$: 'string'},
+    unspent: {type$: 'boolean'}
+  }
+)
+
+function getAllColoredCoins(data) {
+//  getAllColoredCoins, basically just call cc-scanner API getAllColoredCoins.
+//
+//  Additionally, caller might request only unspent coins (using 'unspent' parameter), in that case we need to additionally filter coins using chromanode /transactions/unspent API
+//
+//  cc-scanner API example (all Cuber transactions):
+//
+//  http://scanner-btc.chromanode.net/api/getAllColoredCoins?color_desc=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0
+  return validateParams(data, getAllColoredCoinsParamCheck)
+  .then(function () {
+           var color_desc = data.color_desc
+           var deferred = Q.defer()
+           var url = scannerUrl + 'getAllColoredCoins?color_desc=' + color_desc
+           request(url,
+             function (error, response, body) {
+               if (error) {
+                 deferred.reject(error);
+               }
+               if (response.statusCode == 200) {
+                 var unspent = data.unspent
+                 if (unspent) {
+                   deferred.reject(
+                     new Error('NOT IMPLEMENTED YET'))
+                 }
+                 deferred.resolve(JSON.parse(body));
+               } else {
+                 console.error('cc-scanner returned this:' + body);
+                 deferred.reject(
+                   new Error('cc-scanner returned status:' + response.statusCode))
+               }
+             })
+           return deferred.promise;
+  })
+}
+
 function broadcastTx(data) {
   // chromanode returns from transaction/send sooner than it adds
   // transaction to database, which is undesirable for a high-level API,
@@ -274,11 +319,11 @@ function broadcastTx(data) {
                 if (tries > 120) { // give up after 2 minutes
                   reject(new Error('timeout waiting for chromanode to accept ' + txid))
                   return
-                } 
+                }
                 bc.getTxBlockHash(txid).done(resolve, function () {
                     Q.delay(1000).done(dotry)
                 })
-              }      
+              }
               dotry();
           })
       })
@@ -286,9 +331,10 @@ function broadcastTx(data) {
 }
 
 module.exports = {
-  initialize: initialize, 
+  initialize: initialize,
   createIssueTx: createIssueTx,
   createTransferTx: createTransferTx,
   getUnspentCoinsData: getUnspentCoinsData,
+  getAllColoredCoins: getAllColoredCoins,
   broadcastTx: broadcastTx
 }

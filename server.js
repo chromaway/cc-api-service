@@ -16,7 +16,7 @@ app.options('*', cors(cors_options));
 
 var api = express.Router();
 
-function defineAPIcall(name, computeFn, formatFn) {
+function definePostCall(name, computeFn, formatFn) {
   api.post(name, function (req, res) {
     jsonBody(req, function (error, body) {
       if (error) res.status(400).json({error: 'JSON required'})
@@ -32,13 +32,27 @@ function defineAPIcall(name, computeFn, formatFn) {
     })
   })
 }
+function defineGetCall(name, computeFn, formatFn) {
+  api.get(name, function (req, res) {
+    var params = req.query;
+    computeFn(params).done(
+      function (result) { res.json(formatFn(result))},
+      function (err) {
+        console.error("Error in api-call:" + name, err)
+        res.status(500).json({error: err.toString()}) 
+      }
+    );
+  });
+}
+
 
 function identity (x) { return x }
 
-defineAPIcall('/createIssueTx', backend.createIssueTx, identity);
-defineAPIcall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
-defineAPIcall('/createTransferTx', backend.createTransferTx, identity);
-defineAPIcall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
+definePostCall('/createIssueTx', backend.createIssueTx, identity);
+definePostCall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
+definePostCall('/createTransferTx', backend.createTransferTx, identity);
+defineGetCall('/getAllColoredCoins', backend.getAllColoredCoins, identity);
+definePostCall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
 
 app.use('/api', api);
 var server;
