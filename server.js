@@ -62,12 +62,14 @@ var startService = function (args) {
 
   var defaults = {
     testnet: false,
-    port: 4444,
-    scanner: 'http://scanner-btc.chromanode.net/api/',
-    testnetScanner: 'http://scanner-tbtc.chromanode.net/api/'
+    port: 4444
   }
 
   args = _.extend(defaults, args);
+  if (!args.scanner)
+    args.scanner = args.testnet ? 
+                     'http://scanner-tbtc.chromanode.net/api/' :
+                     'http://scanner-btc.chromanode.net/api/';
 
   var walletOpts = {
     testnet: args.testnet,
