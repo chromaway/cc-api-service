@@ -13,23 +13,24 @@ Test:
 See [instructions](#test-script)
 
 
-##
-[![Build Status](https://travis-ci.org/chromaway/cc-api-service.svg?branch=master)](https://travis-ci.org/chromaway/cc-api-service) [![Coverage Status](https://coveralls.io/repos/chromaway/cc-api-service/badge.png)](https://coveralls.io/r/chromaway/cc-api-service) [![Dependency status](https://david-dm.org/chromaway/cc-api-service/status.png)](https://david-dm.org/chromaway/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/chromaway/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
+[![Build Status](https://travis-ci.org/chromaway/cc-api-service.svg?branch=master)](https://travis-ci.org/chromaway/cc-api-service) [![Coverage Status](https://coveralls.io/repos/chromaway/cc-api-service/badge.svg?branch=master&service=github)](https://coveralls.io/github/chromaway/cc-api-service?branch=master) [![Dependency status](https://david-dm.org/chromaway/cc-api-service/status.png)](https://david-dm.org/chromaway/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/chromaway/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
 
 Developer fork:
 
 * Hankhero
 
-[![Build Status](https://travis-ci.org/hankhero/cc-api-service.svg?branch=master)](https://travis-ci.org/hankhero/cc-api-service) [![Coverage Status](https://coveralls.io/repos/hankhero/cc-api-service/badge.png)](https://coveralls.io/r/hankhero/cc-api-service) [![Dependency status](https://david-dm.org/hankhero/cc-api-service/status.png)](https://david-dm.org/hankhero/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/hankhero/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
+[![Build Status](https://travis-ci.org/hankhero/cc-api-service.svg?branch=master)](https://travis-ci.org/hankhero/cc-api-service) [![Coverage Status](https://coveralls.io/repos/hankhero/cc-api-service/badge.svg?branch=master&service=github)](https://coveralls.io/r/hankhero/cc-api-service?branch=master) [![Dependency status](https://david-dm.org/hankhero/cc-api-service/status.png)](https://david-dm.org/hankhero/cc-api-service#info=dependencies&view=table) [![Dev Dependency Status](https://david-dm.org/hankhero/cc-api-service/dev-status.png)](https://david-dm.org/chromaway/cc-api-service#info=devDependencies&view=table)
 
 
 ## Command-line options
 
-Parameter | Meaning
-----------|------------------------------------
-port      | service port, defaults to 4444
-testnet   | testnet or mainnet mode, defaults to mainnet
-chromanode| chromanode URL, defaults to v1.livenet.bitcoin.chromanode.net
+Parameter      | Meaning
+---------------|------------------------------------
+port           | service port, defaults to 4444
+testnet        | testnet or mainnet mode, defaults to mainnet
+chromanode     | chromanode URL, defaults to v1.livenet.bitcoin.chromanode.net
+scanner        | cc-scanner URL, defaults to http://scanner-btc.chromanode.net/api/
+testnetScanner | like above but if testnet, http://scanner-tbtc.chromanode.net/api/
 
 ## API calls
 
@@ -158,7 +159,34 @@ Sample output:
          "color":"epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679",
          "color_value":818000}]}
          
-Note: "value" is bitcoin value of output, "color_value" is colorvalue for "color".
+Note: "value" is bitcoin value of output, "color_value" is colorvalue
+for "color".
+
+### getAllColoredCoins
+
+`GET /api/getAllColoredCoins`
+
+Get all colored-coins, or get all unspent colored-coins
+
+Parameters:
+
+name       | description
+-----------|------------
+color_desc | Color descriptor
+unspent    | 'true' or 'false', optional.
+
+If unspent=true is specified, then we remove spent transactions.
+
+Sample query:
+
+    http://localhost:4444/api/getAllColoredCoins?color_desc=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0&unspent=true
+    
+Sample output:
+
+    {"coins":[
+      {"txid":"76e021a920439bdb237fd259642524f335dc2ff60422f57a2e851c63a236976a","oidx":1,"value":"900"},
+      {"txid":"e2ee8713507898e41d20cbd10fb617b57e3f7bca127a5ac8c1198277a4a67eec","oidx":0,"value":"1000"}]}
+
 
 ### getAllUnspentCoins
 
