@@ -168,8 +168,7 @@ function getUnspentCoins(context, addresses, color_desc) {
         if (colordef.getColorType() === 'uncolored'){
           var data = {
             txid: unspent.txid,
-            outputs: [unspent.vount],
-            color_kernel: "epobc"
+            outputs: [unspent.vount]
           }
           return getTxColorValues(data).then(function (result) {
             if (result.colorvalues){
@@ -345,10 +344,9 @@ function filterUnspent(data) {
 
 var getTxColorVavuesParamCheck = parambulator(
   {
-    required$: ['txid', 'outputs', 'color_kernel'],
+    required$: ['txid', 'outputs'],
     txid: {type$: 'string'},
-    outputs: {type$:'array'},
-    color_kernel: {type$: 'string'}
+    outputs: {type$:'array'}
   }
 )
 
@@ -356,29 +354,25 @@ function getTxColorValues(data) {
   //  getTxColorValues, basically just call cc-scanner API getTxColorValues.
   return validateParams(data, getTxColorVavuesParamCheck)
   .then(function () {
-     var txid = data.txid
-     var outputs = data.outputs
-     var color_kernel = data.color_kernel
-     var deferred = Q.defer()
-     var url = (scannerUrl + 'getTxColorValues' +
-                '?txid=' + txid +
-                // '&outputs=' + outputs + // FIXME cc-scanner parse error 
-                '&color_kernel=' + color_kernel)
+    var deferred = Q.defer()
 
-     request(url,
-       function (error, response, body) {
-         if (error) {
-           deferred.reject(error);
-         }
-         if (response.statusCode == 200) {
-           deferred.resolve(JSON.parse(body));
-         } else {
-           console.error('cc-scanner returned this:' + body);
-           deferred.reject(
-             new Error('cc-scanner returned status:' + response.statusCode))
-         }
-       })
-     return deferred.promise;
+    request({
+        method: 'post', 
+        uri: scannerUrl + 'getTxColorValues', 
+        body: data, json: true
+    }, function (error, response, body){
+      if (error) {
+        deferred.reject(error);
+      }
+      if (response.statusCode == 200) {
+        deferred.resolve(body);
+      } else {
+        console.error('cc-scanner returned this:' + body);
+        deferred.reject(
+          new Error('cc-scanner returned status:' + response.statusCode))
+      }
+    })
+    return deferred.promise;
   })
 }
 
