@@ -43,7 +43,7 @@ function initializeWallet(opts, done) {
 
 function initializeScanner(url) {
   console.log("cc-scanner url: " + url);
-  
+
   scannerUrl = url;
 }
 
@@ -55,7 +55,7 @@ function initialize(opts, done) {
   // Then we could do something like this instead
   // Add a package dependency:
   //     "blockchain-js": "git://github.com/chromaway/blockchainjs.git",
-  // 
+  //
   // var urlList = require('blockchainjs').connector.Chromanode.getSources('livenet')
   // chromaNodeUrl = urlList[0];
   //
@@ -134,17 +134,18 @@ function getUnspentCoins(context, addresses, color_desc) {
   return bc.addressesQuery(addresses, {status: 'unspent'}).then(function (res) {
     return Q.all(res.unspent.map(function (unspent) {
       var cvQ = null;
-      if (colordef.getColorType() === 'uncolored')
+      if (colordef.getColorType() === 'uncolored'){
         cvQ = Q(new ColorValue(colordef, parseInt(unspent.value, 10)))
-      else
+      } else {
         cvQ = Q.ninvoke(cd, 'getCoinColorValue',
-          {txId: unspent.txid, outIndex: unspent.vount},
-          colordef, getTxFn);
-
+                        {txId: unspent.txid, outIndex: unspent.vount},
+                        colordef, getTxFn);
+      }
 
       var script = bitcoin.Script.fromHex(unspent.script);
-      var addresses = bitcoin.util.getAddressesFromScript(script,
-                                                          context.getBitcoinNetwork());
+      var addresses = bitcoin.util.getAddressesFromScript(
+          script, context.getBitcoinNetwork()
+      );
       var address = '';
       if (addresses.length === 1)
         address = addresses[0];
@@ -152,17 +153,34 @@ function getUnspentCoins(context, addresses, color_desc) {
       return cvQ.then(function (cv) {
         if (cv === null) return null;
         var coin = new Coin({
-                txId: unspent.txid,
-                outIndex: unspent.vount,
-                value: parseInt(unspent.value, 10),
-                script: unspent.script,
-                address: address
+              txId: unspent.txid,
+              outIndex: unspent.vount,
+              value: parseInt(unspent.value, 10),
+              script: unspent.script,
+              address: address
             }, {
               isAvailable: true,
               getCoinMainColorValue: cv
             });
         add_coin_to_cache(coin);
-        return coin;
+        
+        // check if coins are colored when uncolored requested
+        if (colordef.getColorType() === 'uncolored'){
+          var data = {
+            txid: unspent.txid,
+            outputs: [unspent.vount]
+          }
+          return getTxColorValues(data).then(function (result) {
+            if (result.colorvalues){
+              return null
+            } else {
+              return Q(coin)
+            }
+          })
+        } else {
+          return Q(coin)
+        }
+
       })
     })).then(function (coins) {
       return _.filter(coins);
@@ -324,10 +342,44 @@ function filterUnspent(data) {
   })
 };
 
+var getTxColorVavuesParamCheck = parambulator(
+  {
+    required$: ['txid', 'outputs'],
+    txid: {type$: 'string'},
+    outputs: {type$:'array'}
+  }
+)
+
+function getTxColorValues(data) {
+  //  getTxColorValues, basically just call cc-scanner API getTxColorValues.
+  return validateParams(data, getTxColorVavuesParamCheck)
+  .then(function () {
+    var deferred = Q.defer()
+
+    request({
+        method: 'post', 
+        uri: scannerUrl + 'getTxColorValues', 
+        body: data, json: true
+    }, function (error, response, body){
+      if (error) {
+        deferred.reject(error);
+      }
+      if (response.statusCode == 200) {
+        deferred.resolve(body);
+      } else {
+        console.error('cc-scanner returned this:' + body);
+        deferred.reject(
+          new Error('cc-scanner returned status:' + response.statusCode))
+      }
+    })
+    return deferred.promise;
+  })
+}
+
 function getAllColoredCoins(data) {
 //  getAllColoredCoins, basically just call cc-scanner API getAllColoredCoins.
 //
-//  Additionally, caller might request only unspent coins (using 'unspent' parameter), 
+//  Additionally, caller might request only unspent coins (using 'unspent' parameter),
 //  in that case we need to additionally filter coins using chromanode /transactions/spent API
 //
   return validateParams(data, getAllColoredCoinsParamCheck)
@@ -399,5 +451,6 @@ module.exports = {
   createTransferTx: createTransferTx,
   getUnspentCoinsData: getUnspentCoinsData,
   getAllColoredCoins: getAllColoredCoins,
+  getTxColorValues: getTxColorValues,
   broadcastTx: broadcastTx
 }
