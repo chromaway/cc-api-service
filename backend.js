@@ -107,12 +107,32 @@ CustomOperationalTx.prototype.getChangeAddress = function (colordef) {
 
 CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
   var color_desc = colordef.getDesc();
+  var self = this;
 
-  if (!this.spec.source_addresses[color_desc])
-    throw new Error('source addresses not provided for "' + color_desc + '"');
+  var source_addresses = this.spec.source_addresses || {}
+  var source_coins = this.spec.source_coins || {}
 
-  return getUnspentCoins(this.wallet,
-    this.spec.source_addresses[color_desc],
+  if (!source_addresses[color_desc] && 
+      !source_coins[color_desc])
+    throw new Error('source addresses/coins are not provided for "' + color_desc + '"');
+
+  if (source_coins[color_desc] && source_addresses[color_desc])
+    throw new Error('either source addresses or coins need to be specified, not both, for "' + color_desc + '"');
+
+  if (source_coins[color_desc]) {
+    var coinsQ = Q.all(source_coins[color_desc].map(
+      function (outpoint) {
+        return fetchCoin(self.wallet, color_desc, outpoint).then(function (coin) {
+          if (!coin) throw new Error('color mismatch in source coins for  "' + color_desc + '"');
+          return coin
+        })
+      }))
+    return coinsQ.then(function (coins) {
+      return new CoinList(coins)
+    })    
+  } 
+  else return getUnspentCoins(this.wallet,
+    source_addresses[color_desc],
     color_desc)
   .then(function (coins) {
     console.log('got coins:', coins)
@@ -120,68 +140,82 @@ CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
   })
 };
 
+function makeCoin(context, colordef, rawCoin) {
+  if (!rawCoin.address) { // let's try to figure out address
+    var script = bitcoin.Script.fromHex(rawCoin.script)
+    var addresses = bitcoin.util.getAddressesFromScript(
+      script, context.getBitcoinNetwork());
+    if (addresses.length === 1)
+      rawCoin.address = addresses[0];
+  }
+  // figure out color value
+  var cvQ = null;
+  if (colordef.getColorType() === 'uncolored')
+    cvQ = Q(new ColorValue(colordef, rawCoin.value))
+  else {
+    var bc = context.getBlockchain()
+    var cd = context.getColorData()
+    function getTxFn(txId, cb) {
+      function onFulfilled(txHex) { cb(null, bitcoin.Transaction.fromHex(txHex)) }
+      function onRejected(error) { cb(error) }
+      bc.getTx(txId).then(onFulfilled, onRejected)
+    }
+    cvQ = Q.ninvoke(cd, 'getCoinColorValue',
+      rawCoin, colordef, getTxFn);
+  }
+  
+  return cvQ.then(function (cv) {
+    if (cv === null) return null;
+    var coin = new Coin(rawCoin, { 
+      isAvailable: true,
+      getCoinMainColorValue: cv
+    });
+    
+    // check if coins are colored when uncolored requested
+    if (colordef.getColorType() === 'uncolored') {
+      return getTxColorValues({txid: rawCoin.txId, 
+                               outputs: [rawCoin.outIndex]})
+        .then(function (result) {
+            if (result.colorvalues) {
+              return null
+            } else {
+              add_coin_to_cache(coin)
+              return coin
+            }
+        })
+    } else {
+      add_coin_to_cache(coin)
+      return coin
+    }
+  })  
+}
+
+function fetchCoin(context, color_desc, outpoint) {
+  var bc = context.getBlockchain();
+  var colordef = context.getColorDefinitionManager().resolveByDesc(color_desc);
+  return bc.getTx(outpoint.txId).then(function (rawtx) {
+    var tx = bitcoin.Transaction.fromHex(rawtx)
+    var output = tx.outs[outpoint.outIndex]
+    return makeCoin(context, colordef,
+                    {txId: outpoint.txId,
+                     outIndex: outpoint.outIndex,
+                     value: output.value,
+                     script: output.script
+                    })
+  })
+}
+
 function getUnspentCoins(context, addresses, color_desc) {
   var bc = context.getBlockchain();
-  var cd = context.getColorData();
-
-  function getTxFn(txId, cb) {
-    function onFulfilled(txHex) { cb(null, bitcoin.Transaction.fromHex(txHex)) }
-    function onRejected(error) { cb(error) }
-    bc.getTx(txId).then(onFulfilled, onRejected)
-  }
-
-  var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc);
+  var colordef = context.getColorDefinitionManager().resolveByDesc(color_desc);
   return bc.addressesQuery(addresses, {status: 'unspent'}).then(function (res) {
     return Q.all(res.unspent.map(function (unspent) {
-      var cvQ = null;
-      if (colordef.getColorType() === 'uncolored'){
-        cvQ = Q(new ColorValue(colordef, parseInt(unspent.value, 10)))
-      } else {
-        cvQ = Q.ninvoke(cd, 'getCoinColorValue',
-                        {txId: unspent.txid, outIndex: unspent.vount},
-                        colordef, getTxFn);
-      }
-
-      var script = bitcoin.Script.fromHex(unspent.script);
-      var addresses = bitcoin.util.getAddressesFromScript(
-          script, context.getBitcoinNetwork()
-      );
-      var address = '';
-      if (addresses.length === 1)
-        address = addresses[0];
-
-      return cvQ.then(function (cv) {
-        if (cv === null) return null;
-        var coin = new Coin({
+      return makeCoin(context, colordef, {
               txId: unspent.txid,
               outIndex: unspent.vount,
               value: parseInt(unspent.value, 10),
               script: unspent.script,
-              address: address
-            }, {
-              isAvailable: true,
-              getCoinMainColorValue: cv
-            });
-        add_coin_to_cache(coin);
-        
-        // check if coins are colored when uncolored requested
-        if (colordef.getColorType() === 'uncolored'){
-          var data = {
-            txid: unspent.txid,
-            outputs: [unspent.vount]
-          }
-          return getTxColorValues(data).then(function (result) {
-            if (result.colorvalues){
-              return null
-            } else {
-              return Q(coin)
-            }
-          })
-        } else {
-          return Q(coin)
-        }
-
-      })
+            })
     })).then(function (coins) {
       return _.filter(coins);
     })
@@ -211,7 +245,7 @@ function getUnspentCoinsData (data) {
 
 var createTransferTxParamCheck = parambulator(
   {
-    required$: ['targets','source_addresses', 'change_address'],
+    required$: ['targets'],
     targets: {
       type$:'array',
       '**': {
@@ -219,6 +253,9 @@ var createTransferTxParamCheck = parambulator(
         'color': { type$:'string' },
         'value': {  type$:'integer' }
       }
+    },
+    source_coins: {
+      '*': {type$: 'array'}
     },
     source_addresses: {
       '*': {type$: 'array'}
