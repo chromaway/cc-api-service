@@ -379,7 +379,7 @@ function filterUnspent(data) {
   })
 };
 
-var getTxColorVavuesParamCheck = parambulator(
+var getTxColorValuesParamCheck = parambulator(
   {
     required$: ['txid', 'outputs'],
     txid: {type$: 'string'},
@@ -389,7 +389,7 @@ var getTxColorVavuesParamCheck = parambulator(
 
 function getTxColorValues(data) {
   //  getTxColorValues, basically just call cc-scanner API getTxColorValues.
-  return validateParams(data, getTxColorVavuesParamCheck)
+  return validateParams(data, getTxColorValuesParamCheck)
   .then(function () {
     var deferred = Q.defer()
 
@@ -400,6 +400,7 @@ function getTxColorValues(data) {
     }, function (error, response, body){
       if (error) {
         deferred.reject(error);
+        return
       }
       if (response.statusCode == 200) {
         deferred.resolve(body);

@@ -24,7 +24,7 @@ function definePostCall(name, computeFn, formatFn) {
         computeFn(body).done(
           function (result) { res.json(formatFn(result))},
           function (err) {
-            console.error("Error in api-call:" + name, err)
+            console.error("Error in api-call:" + name,  err.stack || err)
             res.status(500).json({error: err.toString()}) 
           }
         );
@@ -38,7 +38,7 @@ function defineGetCall(name, computeFn, formatFn) {
     computeFn(params).done(
       function (result) { res.json(formatFn(result))},
       function (err) {
-        console.error("Error in api-call:" + name, err)
+        console.error("Error in api-call:" + name, err.stack || err)
         res.status(500).json({error: err.toString()}) 
       }
     );
@@ -84,7 +84,7 @@ var startService = function (args) {
 
   var opts = {
       walletOpts: walletOpts,
-      scannerUrl: args.testnet ? args.testnetScanner : args.scanner
+      scannerUrl: args.scanner
   }
 
   backend.initialize(opts, function () {
