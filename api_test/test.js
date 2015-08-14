@@ -70,10 +70,10 @@ function show() {
 
 var run = function () {
   var params = {
-    source_addresses: { "": [getaddress(0)] },
-    change_address: { "": getaddress(1) },
+    sourceAddresses: { "": [getaddress(0)] },
+    changeAddress: { "": getaddress(1) },
     target: {address: getaddress(2), value: 1000},
-    color_kernel: 'epobc'
+    colorKernel: 'epobc'
   }
   var deferred = Q.defer()
   console.log('Create Issue Transaction:')

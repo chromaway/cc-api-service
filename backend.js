@@ -86,8 +86,8 @@ function CustomOperationalTx(wallet, spec) {
   var self = this
   if (spec.targets)
     spec.targets.forEach(function (target) {
-      var color_desc = target.color
-      var colordef = wallet.getColorDefinitionManager().resolveByDesc(color_desc)
+      var colorDesc = target.color
+      var colordef = wallet.getColorDefinitionManager().resolveByDesc(colorDesc)
 
       var colorValue = new ColorValue(colordef, parseInt(target.value, 10))
       var colorTarget = new ColorTarget(getScriptFromTargetData(target), colorValue)
@@ -99,7 +99,7 @@ inherits(CustomOperationalTx, OperationalTx);
 
 CustomOperationalTx.prototype.getChangeAddress = function (colordef) {
   var color_desc = colordef.getDesc();
-  var address = this.spec.change_address[color_desc];
+  var address = this.spec.changeAddress[color_desc];
   if (!address)
     throw Error('Change address is not specified for color: "' + color_desc + '"');
   return address;
@@ -109,18 +109,18 @@ CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
   var color_desc = colordef.getDesc();
   var self = this;
 
-  var source_addresses = this.spec.source_addresses || {}
-  var source_coins = this.spec.source_coins || {}
+  var sourceAddresses = this.spec.sourceAddresses || {}
+  var sourceCoins = this.spec.sourceCoins || {}
 
-  if (!source_addresses[color_desc] && 
-      !source_coins[color_desc])
+  if (!sourceAddresses[color_desc] && 
+      !sourceCoins[color_desc])
     throw new Error('source addresses/coins are not provided for "' + color_desc + '"');
 
-  if (source_coins[color_desc] && source_addresses[color_desc])
+  if (sourceCoins[color_desc] && sourceAddresses[color_desc])
     throw new Error('either source addresses or coins need to be specified, not both, for "' + color_desc + '"');
 
-  if (source_coins[color_desc]) {
-    var coinsQ = Q.all(source_coins[color_desc].map(
+  if (sourceCoins[color_desc]) {
+    var coinsQ = Q.all(sourceCoins[color_desc].map(
       function (outpoint) {
         return fetchCoin(self.wallet, color_desc, outpoint).then(function (coin) {
           if (!coin) throw new Error('color mismatch in source coins for  "' + color_desc + '"');
@@ -132,7 +132,7 @@ CustomOperationalTx.prototype._getCoinsForColor = function (colordef) {
     })    
   } 
   else return getUnspentCoins(this.wallet,
-    source_addresses[color_desc],
+    sourceAddresses[color_desc],
     color_desc)
   .then(function (coins) {
     console.log('got coins:', coins)
@@ -275,13 +275,13 @@ var createTransferTxParamCheck = parambulator(
         'value': {  type$:'integer' }
       }
     },
-    source_coins: {
+    sourceCoins: {
       '*': {type$: 'array'}
     },
-    source_addresses: {
+    sourceAddresses: {
       '*': {type$: 'array'}
     },
-    change_address: {
+    changeAddress: {
       '*': {type$: 'string'}
     }
   }
@@ -315,13 +315,13 @@ var createIssueTxParamCheck = parambulator(
       'script': { type$:'string' },
       'value': {  type$:'integer' }
     },
-    source_addresses: {
+    sourceAddresses: {
       '*': {type$: 'array'}
     },
-    change_address: {
+    changeAddress: {
       '*': {type$: 'string'}
     },
-    color_kernel: {
+    colorKernel: {
       type$:'string',
       eq$: 'epobc'
     }
@@ -340,14 +340,14 @@ function createIssueTx(data) {
     if (!data.target) throw new Error('no target provided');
 
     var opTxS = new CustomOperationalTx(wallet, {
-        source_addresses: data.source_addresses,
-        change_address: data.change_address
+        sourceAddresses: data.sourceAddresses,
+        changeAddress: data.changeAddress
     });
     opTxS.addTarget(new ColorTarget(
         getScriptFromTargetData(data.target),
         new ColorValue(cclib.ColorDefinitionManager.getGenesis(), // genesis output marker
                        parseInt(data.target.value, 10))));
-    if (data.color_kernel !== 'epobc') throw new Error('only epobc kernel is supported')
+    if (data.colorKernel !== 'epobc') throw new Error('only epobc kernel is supported')
     var cdefCls = cclib.ColorDefinitionManager.getColorDefenitionClsForType('epobc');
     console.log('compose...')
     return Q.nfcall(cdefCls.composeGenesisTx, opTxS).then(function (composedTx) {
@@ -443,8 +443,8 @@ function getTxColorValues(data) {
 }
 var getAllColoredCoinsParamCheck = parambulator(
   {
-    required$: ['color_desc'],
-    color_desc: {type$: 'string'},
+    required$: ['colorDesc'],
+    colorDesc: {type$: 'string'},
     unspent: {type$: 'string', enum$:['true','false']}
   }
 )
@@ -457,7 +457,7 @@ function getAllColoredCoins(data) {
 //
   return validateParams(data, getAllColoredCoinsParamCheck)
   .then(function () {
-           var color_desc = data.color_desc
+           var color_desc = data.colorDesc
            var deferred = Q.defer()
            var url = scannerUrl + 'getAllColoredCoins?color_desc=' + color_desc
            request(url,
