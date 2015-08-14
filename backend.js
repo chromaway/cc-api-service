@@ -214,7 +214,7 @@ function getUnspentCoins(context, addresses, color_desc) {
               txId: unspent.txid,
               outIndex: unspent.vount,
               value: parseInt(unspent.value, 10),
-              script: unspent.script,
+              script: unspent.script
             })
     })).then(function (coins) {
       return _.filter(coins);
