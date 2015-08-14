@@ -275,6 +275,9 @@ var createTransferTxParamCheck = parambulator(
         'value': {  type$:'integer' }
       }
     },
+    source_coins: {
+      '*': {type$: 'array'}
+    },
     source_addresses: {
       '*': {type$: 'array'}
     },
