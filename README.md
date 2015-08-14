@@ -180,14 +180,14 @@ Parameters:
 
 name       | description
 -----------|------------
-colorDesc | Color descriptor
+color      | Color descriptor
 unspent    | 'true' or 'false', optional.
 
 If unspent=true is specified, then we remove spent transactions.
 
 Sample query:
 
-    http://localhost:4444/api/getAllColoredCoins?colorDesc=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0&unspent=true
+    http://localhost:4444/api/getAllColoredCoins?color=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0&unspent=true
     
 Sample output:
 

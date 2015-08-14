@@ -443,8 +443,8 @@ function getTxColorValues(data) {
 }
 var getAllColoredCoinsParamCheck = parambulator(
   {
-    required$: ['colorDesc'],
-    colorDesc: {type$: 'string'},
+    required$: ['color'],
+    color: {type$: 'string'},
     unspent: {type$: 'string', enum$:['true','false']}
   }
 )
@@ -457,7 +457,7 @@ function getAllColoredCoins(data) {
 //
   return validateParams(data, getAllColoredCoinsParamCheck)
   .then(function () {
-           var color_desc = data.colorDesc
+           var color_desc = data.color
            var deferred = Q.defer()
            var url = scannerUrl + 'getAllColoredCoins?color_desc=' + color_desc
            request(url,
