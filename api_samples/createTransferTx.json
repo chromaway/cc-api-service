@@ -4,11 +4,11 @@
     "color": "epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679",
     "value": 1000
   }],
-  "source_addresses": {
+  "sourceAddresses": {
     "": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"],
     "epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679": ["mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k"]
   },
-  "change_address": {
+  "changeAddress": {
     "": "mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo",
     "epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679": "mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k"
   }                   

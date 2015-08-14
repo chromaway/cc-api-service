@@ -1,7 +1,7 @@
 {
         "target": { "address": "mz28HfZFuWjZS1icx4QT1F4319KhsjWWFs", 
                     "value": "1000"},
-        "source_addresses": {"": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"]},
-        "change_address": {"": "mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"},
-        "color_kernel": "epobc"
+        "sourceAddresses": {"": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"]},
+        "changeAddress": {"": "mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"},
+        "colorKernel": "epobc"
 }

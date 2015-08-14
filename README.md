@@ -42,9 +42,9 @@ Call which construct transactions (`createIssueTx`, `createTransferTx`) accept '
 
 Colors are identified using color descriptors such as `epobc:<txid>:0:0`, an empty string "" stands for uncolored bitcoins.
 
-`source_addresses` is an associative array providing a list of addresses for each color, e.g.
+`sourceAddresses` is an associative array providing a list of addresses for each color, e.g.
 
-     "source_addresses": {
+     "sourceAddresses": {
         "": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"],
         "epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679": 
              ["mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k"]
@@ -53,7 +53,7 @@ Colors are identified using color descriptors such as `epobc:<txid>:0:0`, an emp
 Indicates that uncolored coins should be taken from address `mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo`, while colored ones should come from `mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k`.
 Both P2KH (ordinary) and P2SH addresses are supported. (At least I hope so, never tried...)
 
-`change_address` should provide a single address for each color used in a transaction. Change address needs to be provided only in case of a partial spend.
+`changeAddress` should provide a single address for each color used in a transaction. Change address needs to be provided only in case of a partial spend.
 
 `targets` is an array of targets, that is, outputs transaction should have. Each target should include following fields:
 
@@ -78,10 +78,10 @@ Necessary fields:
 
 name | description
 -----|------------
-source_addresses | bitcoin source
-change_address | address used for a change if coins are not spent fully
+sourceAddresses | bitcoin source
+changeAddress | address used for a change if coins are not spent fully
 target | should include "address" (or "script") and "value"
-color_kernel | should be "epobc"
+colorKernel | should be "epobc"
 
 [Sample input](api_samples/createIssueTx.json).
 
@@ -108,8 +108,8 @@ Necessary fields:
 
 name | description
 -----|------------
-source_addresses | source for bitcoins and colored coins
-change_address | address used for a change if coins are not spent fully
+sourceAddresses | source for bitcoins and colored coins
+changeAddress | address used for a change if coins are not spent fully
 targets | see description in 'General conventions' section
 
 [Sample input](api_samples/createTransferTx.json).
@@ -122,7 +122,15 @@ Note: createTransferTx might take significant amount of time as service will com
 
 `POST /api/broadcastTx`
 
-Broadcast a signed transaction.  Returns only when transaction is sent to bitcoind and indexed by chromanode. Might take up to 15 seconds (current chromanode limitations), time outs after 2 minutes.
+Broadcast a signed transaction.  Returns only when transaction is sent
+to bitcoind and indexed by chromanode. Might take up to 15 seconds
+(current chromanode limitations), time outs after 2 minutes.
+
+Parameters:
+
+name | description
+-----|------------
+tx   | a transaction in hex
 
 Sample input (shortened): `{"tx":"01000.....ac00000000"}`
 Sample output: `{"success": true}`
@@ -172,14 +180,14 @@ Parameters:
 
 name       | description
 -----------|------------
-color_desc | Color descriptor
+color      | Color descriptor
 unspent    | 'true' or 'false', optional.
 
 If unspent=true is specified, then we remove spent transactions.
 
 Sample query:
 
-    http://localhost:4444/api/getAllColoredCoins?color_desc=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0&unspent=true
+    http://localhost:4444/api/getAllColoredCoins?color=epobc:a254bd1a4f30d3319b8421ddeb2c2fd17893f7c6d704115f2cb0f5f37ad839af:0:0&unspent=true
     
 Sample output:
 
