@@ -222,8 +222,30 @@ function getUnspentCoins(context, addresses, color_desc) {
   })
 }
 
+
+function validateParams(data, paramCheck) {
+  var deferred = Q.defer()
+  var callback = deferred.makeNodeResolver()
+  paramCheck.validate(data, callback)
+  return deferred.promise;
+}
+
+
+var getUnspentCoinsParamCheck = parambulator(
+  {
+    required$: ['color', 'addresses'],
+    addresses: {
+      '*': {type$: 'array'}
+    },
+    color: {
+      type$: 'string'
+    }
+  }
+)
+
 function getUnspentCoinsData (data) {
-  return Q.try(function () {
+  return validateParams(data, getUnspentCoinsParamCheck)
+  .then(function () {
     if (!data.addresses) throw new Error("requires addresses")
     if (typeof data.color === 'undefined')
       throw new Error("requires color");
@@ -241,7 +263,6 @@ function getUnspentCoinsData (data) {
     }))
   })
 }
-
 
 var createTransferTxParamCheck = parambulator(
   {
@@ -266,13 +287,6 @@ var createTransferTxParamCheck = parambulator(
   }
 )
 
-function validateParams(data, paramCheck) {
-  var deferred = Q.defer()
-  var callback = deferred.makeNodeResolver()
-  paramCheck.validate(data, callback)
-  return deferred.promise;
-}
-
 function createTransferTx(data) {
   return validateParams(data, createTransferTxParamCheck)
   .then(function () {
@@ -293,8 +307,30 @@ function createTransferTx(data) {
   })
 }
 
+var createIssueTxParamCheck = parambulator(
+  {
+    target: {
+      required$: ['value'],
+      'address': { type$:'string' },
+      'script': { type$:'string' },
+      'value': {  type$:'integer' }
+    },
+    source_addresses: {
+      '*': {type$: 'array'}
+    },
+    change_address: {
+      '*': {type$: 'string'}
+    },
+    color_kernel: {
+      type$:'string',
+      eq$: 'epobc'
+    }
+  }
+)
+
 function createIssueTx(data) {
-  return Q.try(function () {
+  return validateParams(data, createIssueTxParamCheck)
+  .then(function () {
     if (data.targets && !data.target) {
       if (data.targets.length > 1 || data.targets.length == 0) throw new Error('issuance transaction should have a single target');
       data.target = data.targets[0];
@@ -329,14 +365,6 @@ function createIssueTx(data) {
     })
   })
 }
-
-var getAllColoredCoinsParamCheck = parambulator(
-  {
-    required$: ['color_desc'],
-    color_desc: {type$: 'string'},
-    unspent: {type$: 'string', enum$:['true','false']}
-  }
-)
 
 function checkUnspent(tx) {
   var txid = tx.txid;
@@ -413,6 +441,13 @@ function getTxColorValues(data) {
     return deferred.promise;
   })
 }
+var getAllColoredCoinsParamCheck = parambulator(
+  {
+    required$: ['color_desc'],
+    color_desc: {type$: 'string'},
+    unspent: {type$: 'string', enum$:['true','false']}
+  }
+)
 
 function getAllColoredCoins(data) {
 //  getAllColoredCoins, basically just call cc-scanner API getAllColoredCoins.
@@ -454,12 +489,19 @@ function getAllColoredCoins(data) {
   })
 }
 
+var broadcastTxParamCheck = parambulator(
+  {
+    required$: ['tx'],
+    tx: {type$: 'string'}
+  }
+)
+
 function broadcastTx(data) {
   // chromanode returns from transaction/send sooner than it adds
   // transaction to database, which is undesirable for a high-level API,
   // so we wait until it is added to chromanode's DB
-
-  return Q.try(function () {
+  return validateParams(data, broadcastTxParamCheck)
+  .then(function () {
       var bc = wallet.getBlockchain();
       var txid = bitcoin.Transaction.fromHex(data.tx).getId();
       return bc.sendTx(data.tx).then(function () {
