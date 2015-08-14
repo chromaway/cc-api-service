@@ -235,7 +235,8 @@ var getUnspentCoinsParamCheck = parambulator(
   {
     required$: ['color', 'addresses'],
     addresses: {
-      '*': {type$: 'array'}
+      type$: 'array',
+      '*': {type$: 'string'}
     },
     color: {
       type$: 'string'
@@ -279,9 +280,11 @@ var createTransferTxParamCheck = parambulator(
       '*': {type$: 'array'}
     },
     sourceAddresses: {
+      type$: 'object',
       '*': {type$: 'array'}
     },
     changeAddress: {
+      type$: 'object',
       '*': {type$: 'string'}
     }
   }
@@ -309,6 +312,7 @@ function createTransferTx(data) {
 
 var createIssueTxParamCheck = parambulator(
   {
+    required$: ['target', 'sourceAddresses', 'changeAddress', 'colorKernel'],
     target: {
       required$: ['value'],
       'address': { type$:'string' },
@@ -316,9 +320,11 @@ var createIssueTxParamCheck = parambulator(
       'value': {  type$:'integer' }
     },
     sourceAddresses: {
+      type$: 'object',
       '*': {type$: 'array'}
     },
     changeAddress: {
+      type$: 'object',
       '*': {type$: 'string'}
     },
     colorKernel: {
