@@ -122,7 +122,15 @@ Note: createTransferTx might take significant amount of time as service will com
 
 `POST /api/broadcastTx`
 
-Broadcast a signed transaction.  Returns only when transaction is sent to bitcoind and indexed by chromanode. Might take up to 15 seconds (current chromanode limitations), time outs after 2 minutes.
+Broadcast a signed transaction.  Returns only when transaction is sent
+to bitcoind and indexed by chromanode. Might take up to 15 seconds
+(current chromanode limitations), time outs after 2 minutes.
+
+Parameters:
+
+name | description
+-----|------------
+tx   | a transaction in hex
 
 Sample input (shortened): `{"tx":"01000.....ac00000000"}`
 Sample output: `{"success": true}`
