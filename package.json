@@ -7,13 +7,14 @@
   "description": "",
   "dependencies": {
     "bigi": "^1.4.0",
+    "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.3.8",
     "body": "^4.5.0",
     "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.5",
     "cors": "^2.5.2",
     "express": "^4.10.6",
+    "lodash": "2.4.1",
     "morgan": "^1.5.1",
     "nopt": "^3.0.3",
-    "lodash": "2.4.1",
     "parambulator": "^1.5.1",
     "q": "1.1.1",
     "send-data": "^3.3.3"
