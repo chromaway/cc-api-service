@@ -4,7 +4,7 @@ var crypto = require('crypto')
 var Q = require('q')
 var TxStateSet = require('blockchainjs').TxStateSet
 var _ = require('lodash')
-
+var fs = require('fs')
 
 var wallet = null
 
@@ -17,23 +17,45 @@ function makeRandomId() {
   return crypto.randomBytes(8).toString('hex')
 }
 
+function validateGroupId (groupId) {
+  if (!groupId.match(/^[01-9a-f]{16}$/))
+    throw new Error("groupId doesn't look good")
+}
+
+function getMGFileName(groupId) {
+  validateGroupId(groupId)
+  return 'mgs/' + groupId
+}
+
 // in-memory backend prototype
 
 var monitoringGroups = {}
 
-function MonitoringGroup () {
-  this.tss = new TxStateSet()
-  this.pendingTxIds = []
-  this.pendingAddresses = []
-  this.log = []
+function MonitoringGroup (groupId, storedState) {
+  this.groupId = groupId
+
+  if (storedState) {
+    assert(storedState.groupId === groupId)
+    this.tss = new TxStateSet(storedState.tssState)
+    this.pendingTxIds = storedState.pendingTxIds
+    this.pendingAddresses = storedState.pendingAddresses
+    this.log = storedState.log
+  } else {
+    this.tss = new TxStateSet()
+    this.pendingTxIds = []
+    this.pendingAddresses = []
+    this.log = []    
+  }
 }
 
 MonitoringGroup.prototype.addTxId = function (txId) {
   this.pendingTxIds.push(txId)
+  return this.saveState()
 }
 
 MonitoringGroup.prototype.addAddress = function (address) {
   this.pendingAddresses.push(address)
+  return this.saveState()
 }
 
 MonitoringGroup.prototype.sync = function () {
@@ -47,7 +69,32 @@ MonitoringGroup.prototype.sync = function () {
       self.tss = newTSS
       var changes = newTSS.getChanges()
       if (changes.length > 0) self.log.push(changes)
+      return self.saveState()
     })
+}
+
+MonitoringGroup.prototype.getState = function () {
+  return {
+    tssState: this.tss.getState(),
+    pendingTxIds: this.pendingTxIds,
+    pendingAddresses: this.pendingAddresses,
+    log: this.log,
+    groupId: this.groupId
+  }
+}
+
+MonitoringGroup.prototype.saveState = function () {
+  return Q.nfcall(fs.writeFile,
+                  getMGFileName(this.groupId),
+                  JSON.stringify(this.getState()))
+}
+
+MonitoringGroup.loadState = function (groupId) {
+  return Q.nfcall(fs.readFile,
+                  getMGFileName(groupId))
+  .then(function (data) {
+      return new MonitoringGroup(groupId, JSON.parse(data))
+  })
 }
 
 MonitoringGroup.prototype.getLog = function (fromPoint) {
@@ -69,36 +116,69 @@ MonitoringGroup.prototype.getLog = function (fromPoint) {
   return log.reverse()
 }
 
+function getMonitoringGroup (groupId) {
+  return Q.try(function () {
+    if (monitoringGroups[groupId])
+      return monitoringGroups[groupId]
+    else 
+      return MonitoringGroup.loadState(groupId)
+        .then(function (mg) {
+          monitoringGroups[groupId] = mg
+          return mg
+        }).catch(function (error) {
+          console.log(error.state || error)
+          throw new Error('groupId not found')
+        })
+  })
+}
+
+
 exports.newMonitoringGroup = function () {
-  var groupId = makeRandomId()
-  monitoringGroups[groupId] = new MonitoringGroup()
-  return groupId
-}
-
-exports.addTx = function (groupId, txId) {
+  var groupId = null
   return Q.try(function () {
-    var mg = monitoringGroups[groupId]
-    if (typeof mg === 'undefined') throw new Error('groupId not found')
-    mg.addTxId(txId)
-    return true
+    groupId = makeRandomId()
+
+    // TODO: also try loading it
+    if (monitoringGroups[groupId])
+      throw new Error('internal error: duplicate groupId')
+
+    monitoringGroups[groupId] = new MonitoringGroup(groupId)
+    return monitoringGroups[groupId].saveState()
+  }).then(function () {
+    return groupId
   })
 }
 
-exports.addAddress = function (groupId, address) {
-  return Q.try(function () {
-    var mg = monitoringGroups[groupId]
-    if (mg === undefined) throw new Error('groupId not found')
-    mg.addAddress(address)
-    return true
-  })
+exports.addTx = function (params) {
+  var groupId = params.groupId,
+      txId = params.txId
+  return getMonitoringGroup(groupId)
+    .then(function (mg) {
+      return mg.addTxId(txId)
+    }).then(function () {
+      return true
+    })
 }
 
-exports.getLog = function (groupId, fromPoint) {
+exports.addAddress = function (params) {
+  var groupId = params.groupId,
+      address = params.address
+  return getMonitoringGroup(groupId)
+    .then(function (mg) {
+      return mg.addAddress(address)
+    }).then(function () {
+      return true
+    })
+}
+
+exports.getLog = function (params) {
   var mg
-  return Q.try(function () {
-    mg = monitoringGroups[groupId]
-    if (mg === undefined) throw new Error('groupId not found')
-    return mg.sync()
+  var groupId = params.groupId,
+      fromPoint = params.fromPoint
+  return getMonitoringGroup(groupId)
+    .then(function (_mg) {
+      mg = _mg
+      return mg.sync()
   }).then(function () {
     return {
       lastPoint: mg.log.length,

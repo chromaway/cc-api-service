@@ -5,6 +5,7 @@ var sendJson = require('send-data/json');
 var cors = require('cors');
 var logger = require('morgan');
 var backend = require('./backend')
+var tsmbackend = require('./tsmbackend')
 var _ = require('lodash')
 
 var app = express();
@@ -54,6 +55,13 @@ definePostCall('/createTransferTx', backend.createTransferTx, identity);
 defineGetCall('/getAllColoredCoins', backend.getAllColoredCoins, identity);
 definePostCall('/getTxColorValues', backend.getTxColorValues, identity);
 definePostCall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
+
+definePostCall('/tsm/newMonitoringGroup', tsmbackend.newMonitoringGroup,
+  function(groupId) { return {groupId: groupId} });
+definePostCall('/tsm/addTx', tsmbackend.addTx, function () { return {success: true}});
+definePostCall('/tsm/addAddress', tsmbackend.addAddress, function () { return {success: true}});
+definePostCall('/tsm/getLog', tsmbackend.getLog, identity);
+
 
 app.use('/api', api);
 var server;
