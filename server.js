@@ -53,6 +53,7 @@ definePostCall('/createIssueTx', backend.createIssueTx, identity);
 definePostCall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
 definePostCall('/createTransferTx', backend.createTransferTx, identity);
 defineGetCall('/getAllColoredCoins', backend.getAllColoredCoins, identity);
+defineGetCall('/getTx', backend.getTx, function (tx) { return {tx: tx} });
 definePostCall('/getTxColorValues', backend.getTxColorValues, identity);
 definePostCall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
 

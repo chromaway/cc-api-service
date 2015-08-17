@@ -15,7 +15,7 @@ var _ = require('lodash')
 var fs = require('fs')
 var parambulator = require('parambulator')
 var request = require('request')
-
+var tsmbackend = require('./tsmbackend')
 
 var wallet = null;
 var scannerUrl;
@@ -38,6 +38,7 @@ function initializeWallet(opts, done) {
   wallet.on('error', function (error) {
     console.log(error.stack || error);
   });
+  tsmbackend.setWallet(wallet)
   wallet.once('syncStop', function () { done(wallet); })
 }
 
@@ -507,6 +508,11 @@ var broadcastTxParamCheck = parambulator(
   }
 )
 
+function getTx(data) {
+  return wallet.getBlockchain().getTx(data.txId)
+}
+
+
 function broadcastTx(data) {
   // chromanode returns from transaction/send sooner than it adds
   // transaction to database, which is undesirable for a high-level API,
@@ -543,5 +549,6 @@ module.exports = {
   getUnspentCoinsData: getUnspentCoinsData,
   getAllColoredCoins: getAllColoredCoins,
   getTxColorValues: getTxColorValues,
+  getTx: getTx,
   broadcastTx: broadcastTx
 }

@@ -35,7 +35,8 @@ function MonitoringGroup (groupId, storedState) {
   this.groupId = groupId
 
   if (storedState) {
-    assert(storedState.groupId === groupId)
+    if (storedState.groupId !== groupId)
+      throw new Error("internal error: groupId")
     this.tss = new TxStateSet(storedState.tssState)
     this.pendingTxIds = storedState.pendingTxIds
     this.pendingAddresses = storedState.pendingAddresses
