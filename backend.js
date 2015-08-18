@@ -201,7 +201,7 @@ function fetchCoin(context, color_desc, outpoint) {
                     {txId: outpoint.txId,
                      outIndex: outpoint.outIndex,
                      value: output.value,
-                     script: output.script
+                     script: output.script.toHex()
                     })
   })
 }
@@ -314,7 +314,7 @@ function createTransferTx(data) {
 
 var createIssueTxParamCheck = parambulator(
   {
-    required$: ['target', 'sourceAddresses', 'changeAddress', 'colorKernel'],
+    required$: ['target', 'colorKernel'],
     target: {
       required$: ['value'],
       'address': { type$:'string' },
@@ -351,10 +351,7 @@ function createIssueTx(data) {
     if (data.targets) throw new Error('both target and targets fields are set');
     if (!data.target) throw new Error('no target provided');
 
-    var opTxS = new CustomOperationalTx(wallet, {
-        sourceAddresses: data.sourceAddresses,
-        changeAddress: data.changeAddress
-    });
+    var opTxS = new CustomOperationalTx(wallet, data);
     opTxS.addTarget(new ColorTarget(
         getScriptFromTargetData(data.target),
         new ColorValue(cclib.ColorDefinitionManager.getGenesis(), // genesis output marker
@@ -421,7 +418,7 @@ function filterUnspent(data) {
 
 var getTxColorValuesParamCheck = parambulator(
   {
-    required$: ['txid', 'outputs'],
+    required$: ['txid'],
     txid: {type$: 'string'},
     outputs: {type$:'array'}
   }
