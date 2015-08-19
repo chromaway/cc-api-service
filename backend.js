@@ -378,7 +378,7 @@ function createIssueTx(data) {
 function checkUnspent(tx) {
   var txId = tx.txId;
   var outIndex = tx.outIndex;
-  var value = tx.value;
+  var value = tx.colorValue;
 
   var path = '/v2/transactions/spent'
   var query = '?otxid=' + txId +'&oindex=' + outIndex;
