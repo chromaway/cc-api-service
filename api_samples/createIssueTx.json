@@ -1,6 +1,6 @@
 {
         "target": { "address": "mz28HfZFuWjZS1icx4QT1F4319KhsjWWFs", 
-                    "value": "1000"},
+                    "value": 1000},
         "sourceAddresses": {"": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"]},
         "changeAddress": {"": "mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"},
         "colorKernel": "epobc"

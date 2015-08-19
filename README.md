@@ -38,7 +38,7 @@ scanner        | cc-scanner URL, defaults to http://scanner-btc.chromanode.net/a
 
 Methods should be called using HTTP POST. Data should be encoded in JSON. Response is JSON-encoded. Transaction ids and transactions are hex-encoded. Server will respond with HTTP status 400 if request is not understood and HTTP status 500 in case of an error.
 
-Call which construct transactions (`createIssueTx`, `createTransferTx`) accept 'transaction spec' which includes source addresses and targets.
+Call which construct transactions (`createIssueTx`, `createTransferTx`) accept 'transaction spec' which includes source addresses (or source coins) and targets.
 
 Colors are identified using color descriptors such as `epobc:<txid>:0:0`, an empty string "" stands for uncolored bitcoins.
 
@@ -53,6 +53,14 @@ Colors are identified using color descriptors such as `epobc:<txid>:0:0`, an emp
 Indicates that uncolored coins should be taken from address `mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo`, while colored ones should come from `mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k`.
 Both P2KH (ordinary) and P2SH addresses are supported. (At least I hope so, never tried...)
 
+Alternatively, inputs can be specified using `sourceCoins`, which gives more fine-grained control compared `sourceAddresses`, which might be relevant to applications which manage their own wallet UTXO set. For each color involved in the transaction either `sourceCoins` or `sourceAddresses` should be provided, it is not permissible to provide both of them for a single color. A coin can be identified by txId and outIndex:
+
+     "sourceCoins": {
+        "epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:0": 
+             [{txId: "b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb", outIndex: 0}]
+        }
+      
+
 `changeAddress` should provide a single address for each color used in a transaction. Change address needs to be provided only in case of a partial spend.
 
 `targets` is an array of targets, that is, outputs transaction should have. Each target should include following fields:
@@ -64,9 +72,15 @@ value| number of atoms which should be sent (satoshis in case of uncolored coins
 address| receiver's address (if script is not provided)
 script | (optional) output's scriptPubKey, can be used instead of address
 
-`createIssueTx` and `createTransferTx` return a list of used coins for convenience (in addition to an hex-encoded unsigned transaction).
+`createIssueTx` and `createTransferTx` return a list of used coins for convenience (in addition to an hex-encoded unsigned transaction). E.g:
 
-**WARNING**: Current version of service assumes that colored and uncolored coins are kept in different addresses. Addresses used for colored coins should never be used as sources of uncolored coins. This limitation will be removed once we switch to coloredcoinjs-lib v4.
+     "inputCoins":
+    [{"txId":"c7995236f2a7bf163c03e1bbf6207eee9586a5a7986e796529111dfaf8ce9721",
+      "outIndex":1,
+      "value":1535290,
+      "script":"76a9145efe254d5f7ba5fafdcdba1b5cc1d4a0887279b088ac",
+      "address":"mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"}]}
+
 
 ### createIssueTx
 
@@ -88,15 +102,13 @@ colorKernel | should be "epobc"
 Sample output  (shortened):
 
      {"tx":"01000.....ac00000000",
-      "input_coins":[{
+      "inputCoins":[{
         "txId":"4ce9c88ac9efe6a8552d583af80d9473c88a3f74ae48f19a61719facf8ce3a43",
         "outIndex":1,
         "value":1639175,
         "script":"76a9145efe254d5f7ba5fafdcdba1b5cc1d4a0887279b088ac",
         "address":"mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"
      }]}
-     
-`input_coins` has information useful for signing the transaction (script is the script of corresponding output).
 
 ### createTransferTx
 
@@ -163,16 +175,54 @@ Sample output:
        [{"txId":"749699eca1f0ec58d9cc770e52f1efc3bb690bbee84ea728c700f877c90f340f",
          "outIndex":1,
          "value":818000,
+         "address":"mz6WNJtK5UKGWP4L7Fp2wH25SbMzrxyM3k",
          "script":"76a914cbcac3ac056fbfddab68ff4c6cae976ad74e238d88ac",
          "color":"epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:180679",
-         "color_value":818000}]}
+         "colorValue":818000}]}
          
-Note: "value" is bitcoin value of output, "color_value" is colorvalue
+Note: "value" is bitcoin value of output, "colorValue" is colorvalue
 for "color".
+
+### getTxColorValues
+
+`POST /api/getTxColorValues`
+
+Get information about colors of outputs of a specific transaction.
+
+Parameters:
+
+name       | description
+-----------|------------
+txId      | transaction id
+outIndices | (optional) query specific output indices only
+outIndex | (optiona) query specific output index
+
+[Sample input](api_samples/getTxColorValues.json)
+
+
+Sample output: 
+
+     {"colorValues":
+       [null,
+        {"color":"epobc:b95323a763fa507110a89ab857af8e949810cf1e67e91104cd64222a04ccd0bb:0:0","value":818000},
+        null]
+     }
+
+Output is either an array with one element for each of transaction's outputs, or null (in case there none of requested outputs are colored).
+`null` is used for uncolored outputs and outputs which weren't requested.
+
+(In the example above, output `0` is actually colored, but it is returned as `null` because only data for output `1` was requested.
+
+### getTx
+
+`GET /api/getTx?txId=<...>`
+
+Returns a transaction in hex form. Output is of form `{"tx": "<tx hex>"}`.
+
 
 ### getAllColoredCoins
 
-`GET /api/getAllColoredCoins`
+`GET /api/getAllColoredCoins?color=<...>`
 
 Get all colored-coins, or get all unspent colored-coins
 
@@ -180,7 +230,7 @@ Parameters:
 
 name       | description
 -----------|------------
-color      | Color descriptor
+color      | color descriptor
 unspent    | 'true' or 'false', optional.
 
 If unspent=true is specified, then we remove spent transactions.
@@ -196,9 +246,6 @@ Sample output:
       {"txid":"e2ee8713507898e41d20cbd10fb617b57e3f7bca127a5ac8c1198277a4a67eec","oidx":0,"value":"1000"}]}
 
 
-### getAllUnspentCoins
-
-_Not implemented yet_. Should report all current unspent coins for a particular color (e.g. all asset owners). Currently this information can be obtained from [cc-scanner](https://github.com/chromaway/cc-scanner) which assembles it into a PostgreSQL database.
 
 ## Samples
 

@@ -1,7 +1,6 @@
 {
         "target": { "address": "mz28HfZFuWjZS1icx4QT1F4319KhsjWWFs", 
-                    "value": "1000"},
-        "sourceAddresses": {"": ["mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"]},
+                    "value": 1000},
         "sourceCoins": {"": 
             [{"txId":"4ce9c88ac9efe6a8552d583af80d9473c88a3f74ae48f19a61719facf8ce3a43","outIndex":1}]},
         "changeAddress": {"": "mpBEGSTSuNeGtKiXqo3V4CocHx8vWSF3Mo"},

@@ -175,9 +175,9 @@ function makeCoin(context, colordef, rawCoin) {
     // check if coins are colored when uncolored requested
     if (colordef.getColorType() === 'uncolored') {
       return getTxColorValues({txId: rawCoin.txId, 
-                               outputs: [rawCoin.outIndex]})
+                               outIndex: rawCoin.outIndex})
         .then(function (result) {
-            if (result.colorvalues) {
+            if (result.colorValues && result.colorValues[rawCoin.outIndex]) {
               return null
             } else {
               add_coin_to_cache(coin)
@@ -257,9 +257,9 @@ function getUnspentCoinsData (data) {
         return Q.ninvoke(coin, 'getMainColorValue', null, null).then(
           function (cv) {
             var rawCoin = coin.toRawCoin();
-            delete rawCoin['address']; // TODO: detect address properly
+            //delete rawCoin['address']; // TODO: detect address properly
             rawCoin.color = data.color;
-            rawCoin.color_value = cv.getValue();
+            rawCoin.colorValue = cv.getValue();
             return rawCoin
           })
     }))
@@ -302,7 +302,7 @@ function createTransferTx(data) {
       return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
                return {
                  tx: tx.toHex(true),
-                 input_coins: composedTx.getTxIns().map(function (txin) {
+                 inputCoins: composedTx.getTxIns().map(function (txin) {
                    var coin = find_cached_coin(txin.txId, txin.outIndex);
                    if (coin) return coin.toRawCoin();
                    else return null;
@@ -364,7 +364,7 @@ function createIssueTx(data) {
         return Q.nfcall(transformTx, composedTx, 'raw', {}).then(function (tx) {
           console.log('done');
           return { tx: tx.toHex(true),
-                   input_coins: composedTx.getTxIns().map(function (txin) {
+                   inputCoins: composedTx.getTxIns().map(function (txin) {
                        var coin = find_cached_coin(txin.txId, txin.outIndex);
                        if (coin) return coin.toRawCoin();
                        else return null;
@@ -420,7 +420,8 @@ var getTxColorValuesParamCheck = parambulator(
   {
     required$: ['txId'],
     txId: {type$: 'string'},
-    outputs: {type$:'array'}
+    outIndices: {type$:'array'},
+    outIndex: {type$: 'integer'}
   }
 )
 
