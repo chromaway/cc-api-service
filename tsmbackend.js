@@ -107,12 +107,10 @@ MonitoringGroup.prototype.getLog = function (fromPoint) {
     // skip old entries
     if (txIds[entry.txid]) return 
     txIds[entry.txid] = true
-    
-    entry = _.clone(entry)
-    entry.txId = entry.txid
-    delete entry.txid
 
-    log.push(entry)    
+    var lentry = _.omit(entry, 'txid')
+    lentry.txId = entry.txid
+    log.push(lentry)
   })
   return log.reverse()
 }

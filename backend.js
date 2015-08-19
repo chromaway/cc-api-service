@@ -23,12 +23,12 @@ var chromaNodeUrl;
 var coin_cache = {};
 
 function add_coin_to_cache(coin) {
-  // txid:outindex is the key
+  // txId:outIndex is the key
   coin_cache[coin.toString()] = coin;
 }
 
-function find_cached_coin(txid, outindex) {
-  return coin_cache[txid + ":" + outindex.toString()];
+function find_cached_coin(txId, outIndex) {
+  return coin_cache[txId + ":" + outIndex.toString()];
 }
 
 function initializeWallet(opts, done) {
@@ -174,7 +174,7 @@ function makeCoin(context, colordef, rawCoin) {
     
     // check if coins are colored when uncolored requested
     if (colordef.getColorType() === 'uncolored') {
-      return getTxColorValues({txid: rawCoin.txId, 
+      return getTxColorValues({txId: rawCoin.txId, 
                                outputs: [rawCoin.outIndex]})
         .then(function (result) {
             if (result.colorvalues) {
@@ -376,12 +376,12 @@ function createIssueTx(data) {
 }
 
 function checkUnspent(tx) {
-  var txid = tx.txid;
-  var oidx = tx.oidx;
+  var txId = tx.txId;
+  var outIndex = tx.outIndex;
   var value = tx.value;
 
   var path = '/v2/transactions/spent'
-  var query = '?otxid=' + txid +'&oindex=' +oidx;
+  var query = '?otxid=' + txId +'&oindex=' + outIndex;
   var url = chromaNodeUrl + path + query;
 
   var deferred = Q.defer()
@@ -418,8 +418,8 @@ function filterUnspent(data) {
 
 var getTxColorValuesParamCheck = parambulator(
   {
-    required$: ['txid'],
-    txid: {type$: 'string'},
+    required$: ['txId'],
+    txId: {type$: 'string'},
     outputs: {type$:'array'}
   }
 )
@@ -517,19 +517,19 @@ function broadcastTx(data) {
   return validateParams(data, broadcastTxParamCheck)
   .then(function () {
       var bc = wallet.getBlockchain();
-      var txid = bitcoin.Transaction.fromHex(data.tx).getId();
+      var txId = bitcoin.Transaction.fromHex(data.tx).getId();
       return bc.sendTx(data.tx).then(function () {
           console.log('sent tx to chromanode, waiting for it to appear...')
           return Q.Promise(function (resolve, reject) {
               var tries = 0;
               function dotry () {
-                console.log("polling " + txid + " " + tries);
+                console.log("polling " + txId + " " + tries);
                 tries += 1;
                 if (tries > 120) { // give up after 2 minutes
-                  reject(new Error('timeout waiting for chromanode to accept ' + txid))
+                  reject(new Error('timeout waiting for chromanode to accept ' + txId))
                   return
                 }
-                bc.getTxBlockHash(txid).done(resolve, function () {
+                bc.getTxBlockHash(txId).done(resolve, function () {
                     Q.delay(1000).done(dotry)
                 })
               }

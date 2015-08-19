@@ -47,21 +47,19 @@ function defineGetCall(name, computeFn, formatFn) {
 }
 
 
-function identity (x) { return x }
-
-definePostCall('/createIssueTx', backend.createIssueTx, identity);
+definePostCall('/createIssueTx', backend.createIssueTx, _.identity);
 definePostCall('/getUnspentCoins', backend.getUnspentCoinsData, function (coins) { return {coins: coins} });
-definePostCall('/createTransferTx', backend.createTransferTx, identity);
-defineGetCall('/getAllColoredCoins', backend.getAllColoredCoins, identity);
+definePostCall('/createTransferTx', backend.createTransferTx, _.identity);
+defineGetCall('/getAllColoredCoins', backend.getAllColoredCoins, _.identity);
 defineGetCall('/getTx', backend.getTx, function (tx) { return {tx: tx} });
-definePostCall('/getTxColorValues', backend.getTxColorValues, identity);
+definePostCall('/getTxColorValues', backend.getTxColorValues, _.identity);
 definePostCall('/broadcastTx', backend.broadcastTx, function () { return {success: true} });
 
 definePostCall('/tsm/newMonitoringGroup', tsmbackend.newMonitoringGroup,
   function(groupId) { return {groupId: groupId} });
 definePostCall('/tsm/addTx', tsmbackend.addTx, function () { return {success: true}});
 definePostCall('/tsm/addAddress', tsmbackend.addAddress, function () { return {success: true}});
-definePostCall('/tsm/getLog', tsmbackend.getLog, identity);
+definePostCall('/tsm/getLog', tsmbackend.getLog, _.identity);
 
 
 app.use('/api', api);
