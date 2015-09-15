@@ -7,9 +7,9 @@
   "description": "",
   "dependencies": {
     "bigi": "^1.4.0",
-    "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.4.1",
+    "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.3.11",
     "body": "^4.5.0",
-    "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.5",
+    "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.7",
     "cors": "^2.5.2",
     "express": "^4.10.6",
     "lodash": "2.4.1",
