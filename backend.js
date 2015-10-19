@@ -441,7 +441,7 @@ function getTxColorValues(data) {
         return
       }
       if (response.statusCode == 200) {
-        deferred.resolve(body);
+        deferred.resolve(body.data);
       } else {
         console.error('cc-scanner returned this:' + body);
         deferred.reject(

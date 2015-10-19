@@ -100,6 +100,31 @@ describe('TSM backend', function () {
     }).done(done, done)
   })
 
+  it('getLog invalid transaction', function (done) {
+    var groupId
+    Q.try(function () {
+      return tsmb.newMonitoringGroup()
+    }).then(function (_groupId) {
+      groupId = _groupId
+      return tsmb.addTx({groupId: groupId,
+                         // this is an txid of a transaction which doesn't exit
+                         txId: 'aaaaaaaaaaaaaaa6deb7495631335616a308a2db8eb1aa596296d3be5f34f01e'})
+    }).then(function () {
+      return tsmb.getLog({groupId: groupId}).then(function (log) {
+          expect(log.txStates).to.eql([ { 
+            txId: 'aaaaaaaaaaaaaaa6deb7495631335616a308a2db8eb1aa596296d3be5f34f01e',
+            status: 'invalid'}])
+          expect(log.lastPoint).to.be.above(0)
+          return log.lastPoint
+      })
+    }).then(function (lastPoint) {
+      return tsmb.getLog({groupId: groupId, fromPoint: lastPoint})
+    }).then(function (log) {
+      expect(log.txStates).to.be.empty;
+      return
+    }).done(done, done)
+  })
+
   it('more getLog', function (done) {
     var groupId, lastPoint
     Q.try(function () {
