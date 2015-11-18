@@ -1,3 +1,4 @@
+
 var Q = require('q');
 var WalletCore = require('cc-wallet-core');
 var cclib = WalletCore.cclib;

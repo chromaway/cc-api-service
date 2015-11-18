@@ -1,10 +1,13 @@
 // Transaction state monitoring
 
-var crypto = require('crypto')
 var Q = require('q')
+var crypto = require('crypto')
+var Promise = require('bluebird')
 var TxStateSet = require('blockchainjs').TxStateSet
 var _ = require('lodash')
 var fs = require('fs')
+
+var makeConcurrent = require('make-concurrent')(Promise)
 
 var wallet = null
 
@@ -131,6 +134,9 @@ function getMonitoringGroup (groupId) {
   })
 }
 
+var withLock = makeConcurrent(
+  function (fn) {  return fn()  }, { concurency: 1 }
+)
 
 exports.newMonitoringGroup = function () {
   var groupId = null
@@ -149,17 +155,20 @@ exports.newMonitoringGroup = function () {
 }
 
 exports.addTx = function (params) {
-  var groupId = params.groupId,
-      txId = params.txId
-  return getMonitoringGroup(groupId)
-    .then(function (mg) {
-      return mg.addTxId(txId)
-    }).then(function () {
-      return true
-    })
+  return withLock(function() {
+    var groupId = params.groupId,
+        txId = params.txId
+    return getMonitoringGroup(groupId)
+      .then(function (mg) {
+        return mg.addTxId(txId)
+      }).then(function () {
+        return true
+      })
+  })
 }
 
 exports.addAddress = function (params) {
+return withLock(function() {
   var groupId = params.groupId,
       address = params.address
   return getMonitoringGroup(groupId)
@@ -168,9 +177,11 @@ exports.addAddress = function (params) {
     }).then(function () {
       return true
     })
+})
 }
 
 exports.getLog = function (params) {
+return withLock(function() {
   var mg
   var groupId = params.groupId,
       fromPoint = params.fromPoint
@@ -184,4 +195,5 @@ exports.getLog = function (params) {
       txStates: mg.getLog(fromPoint)
     }
   })  
+})
 }

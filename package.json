@@ -6,6 +6,8 @@
   },
   "description": "",
   "dependencies": {
+    "bluebird": "^2.9.34",
+    "make-concurrent": "0.0.4",
     "bigi": "^1.4.0",
     "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.3.11",
     "body": "^4.5.0",

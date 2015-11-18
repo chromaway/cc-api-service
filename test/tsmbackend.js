@@ -149,4 +149,26 @@ describe('TSM backend', function () {
     }).done(done, done)
   })
 
+
+  it('concurrent getLog', function (done) {
+    var groupId, lastPoint
+    Q.try(function () {
+      return tsmb.newMonitoringGroup()
+    }).then(function (_groupId) {
+      groupId = _groupId
+      var op1 = tsmb.addTx({groupId: groupId, txId: '75a22bdb38352ba6deb7495631335616a308a2db8eb1aa596296d3be5f34f01e'})
+              .then(function () {
+                return tsmb.getLog({groupId: groupId})
+              })
+      var op2 = tsmb.addAddress({groupId: groupId, address: 'miASVwyhoeFqoLodXUdbDC5YjrdJPwxyXE'})
+              .then(function () {
+                return tsmb.getLog({groupId: groupId})
+              })
+      return Q.all([op1, op2])
+    }).then(function (logs) {
+      return tsmb.getLog({groupId: groupId})
+    }).then(function (log) {
+      expect(log.txStates.length).to.equal(3)
+    }).done(done, done)
+  })  
 })
