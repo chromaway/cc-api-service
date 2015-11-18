@@ -68,7 +68,7 @@ describe('TSM backend', function () {
       return tsmb.newMonitoringGroup()
     }).then(function (groupId) {
       return tsmb.getLog({groupId: groupId}).then(function (log) {
-        expect(log).to.deep.equal({lastPoint: 0, txStates: []})
+        expect(log).to.deep.equal({lastPoint: 0, txStates: [], lastBlock: null})
         return
       })
     }).done(done, done)
@@ -143,6 +143,7 @@ describe('TSM backend', function () {
       return tsmb.getLog({groupId: groupId, fromPoint: lastPoint})
     }).then(function (log) {
       expect(log.txStates.length).to.equal(2)
+      expect(log.lastBlock.height).to.be.above(0)
       return tsmb.getLog({groupId: groupId})
     }).then(function (log) {
       expect(log.txStates.length).to.equal(3)

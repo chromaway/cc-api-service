@@ -77,6 +77,10 @@ MonitoringGroup.prototype.sync = function () {
     })
 }
 
+MonitoringGroup.prototype.getLastBlock = function () {
+  return this.tss.latest
+}
+
 MonitoringGroup.prototype.getState = function () {
   return {
     tssState: this.tss.getState(),
@@ -192,7 +196,8 @@ return withLock(function() {
   }).then(function () {
     return {
       lastPoint: mg.log.length,
-      txStates: mg.getLog(fromPoint)
+      txStates: mg.getLog(fromPoint),
+      lastBlock: mg.getLastBlock()
     }
   })  
 })
