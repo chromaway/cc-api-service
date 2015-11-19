@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "url": "git://github.com/chromaway/cc-api-service.git",
     "type": "git"
@@ -9,9 +9,9 @@
     "bluebird": "^2.9.34",
     "make-concurrent": "0.0.4",
     "bigi": "^1.4.0",
-    "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.3.11",
+    "blockchainjs": "git://github.com/chromaway/blockchainjs.git#v0.3.12",
     "body": "^4.5.0",
-    "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.8",
+    "cc-wallet-core": "git://github.com/chromaway/cc-wallet-core.git#v0.8.10",
     "cors": "^2.5.2",
     "express": "^4.10.6",
     "lodash": "2.4.1",
