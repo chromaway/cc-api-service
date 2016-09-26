@@ -228,7 +228,8 @@ function getUnspentCoins(context, addresses, color_desc) {
 function validateParams(data, paramCheck) {
   var deferred = Q.defer()
   var callback = deferred.makeNodeResolver()
-  paramCheck.validate(data, callback)
+  //paramCheck.validate(data, callback)
+  callback(null, true)
   return deferred.promise;
 }
 
