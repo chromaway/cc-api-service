@@ -23,6 +23,34 @@ var scannerUrl;
 var chromaNodeUrl;
 var coin_cache = {};
 
+function runDynamicFees (wallet, opts) {
+  opts = _.assign({
+    minfee: 30,
+    maxfee: 200,
+    feeurl: "https://bitcoinfees.21.co/api/v1/fees/recommended",
+    feeinterval: 60000
+  }, opts)
+  if (!opts.feeurl) return
+  setInterval(function () {
+    request(opts.feeurl,
+	    function (error, response, body) {
+	      if (error) { console.log("Error getting recommended fees:", error) }
+	      else if (response.statusCode === 200) {
+		var res = JSON.parse(body)
+		var recFee = res.halfHourFee;
+		if (recFee && recFee >= opts.minfee && recFee <= opts.maxfee) {
+		  console.log("Using recommended fee ", recFee)
+		  wallet.bitcoinNetwork.feePerKb = recFee * 1000;
+		} else {
+		  console.log("Recommended fee is out of bounds", recFee)
+		}
+	      }
+	    })
+    
+  }, opts.feeinterval)
+}
+
+
 function add_coin_to_cache(coin) {
   // txId:outIndex is the key
   coin_cache[coin.toString()] = coin;
@@ -53,20 +81,10 @@ function initialize(opts, done) {
   initializeScanner(opts.scannerUrl);
   initializeWallet(opts.walletOpts, done);
 
-  // Temporary solution until v2 of api is deployed correctly.
-  // Then we could do something like this instead
-  // Add a package dependency:
-  //     "blockchain-js": "git://github.com/chromaway/blockchainjs.git",
-  //
-  // var urlList = require('blockchainjs').connector.Chromanode.getSources('livenet')
-  // chromaNodeUrl = urlList[0];
-  //
-  chromaNodeUrl = 'http://136.243.23.208:25002'; //TODO DO THIS FOR REAL
-  if (opts.testnet)
-    chromaNodeUrl = 'http://136.243.23.208:25001'; //TODO DO THIS FOR REAL
+  // TODO: relies on internals of Chromanode connector
+  chromaNodeUrl = wallet.blockchain.connector._requestURL
 
-  console.log('WARNING and TODO: This version hase a hardcoded chromaNodeUrl: ' + chromaNodeUrl);
-
+  runDynamicFees(wallet, opts.otherArgs);
 }
 
 
@@ -519,8 +537,10 @@ function broadcastTx(data) {
   // so we wait until it is added to chromanode's DB
   return validateParams(data, broadcastTxParamCheck)
   .then(function () {
-      var bc = wallet.getBlockchain();
+      var bc = wallet.getBlockchain();    
       var txId = bitcoin.Transaction.fromHex(data.tx).getId();
+    console.log("Broadcast", txId, data.tx.length/2, "bytes");
+    
       return bc.sendTx(data.tx).then(function () {
           console.log('sent tx to chromanode, waiting for it to appear...')
           return Q.Promise(function (resolve, reject) {

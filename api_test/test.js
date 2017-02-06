@@ -90,7 +90,7 @@ var run = function () {
 
     var txb = bitcoin.TransactionBuilder.fromTransaction(transaction)
 
-    res.input_coins.forEach(function (coin, index) {
+    res.inputCoins.forEach(function (coin, index) {
       var key = address_key_map[coin.address]
       if (!key) {
         console.log('lack key for address ' + coin.address)

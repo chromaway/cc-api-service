@@ -76,8 +76,8 @@ var startService = function (args) {
   args = _.extend(defaults, args);
   if (!args.scanner)
     args.scanner = args.testnet ? 
-                     'http://scanner-tbtc.chromanode.net/api/' :
-                     'http://scanner-btc.chromanode.net/api/';
+                     'http://v1.testnet.bitcoin.chromanode.net/v2/cc/' :
+                     'http://v1.livenet.bitcoin.chromanode.net/v2/cc/';
 
   var walletOpts = {
     testnet: args.testnet,
@@ -91,7 +91,8 @@ var startService = function (args) {
 
   var opts = {
       walletOpts: walletOpts,
-      scannerUrl: args.scanner
+      scannerUrl: args.scanner,
+      otherArgs: args
   }
 
   backend.initialize(opts, function () {
