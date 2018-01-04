@@ -27,7 +27,7 @@ function runDynamicFees (wallet, opts) {
   opts = _.assign({
     minfee: 30,
     maxfee: 200,
-    feeurl: "https://bitcoinfees.21.co/api/v1/fees/recommended",
+    feeurl: "https://api.blockchain.info/mempool/fees",
     feeinterval: 60000
   }, opts)
   if (!opts.feeurl) return
@@ -37,7 +37,7 @@ function runDynamicFees (wallet, opts) {
 	      if (error) { console.log("Error getting recommended fees:", error) }
 	      else if (response.statusCode === 200) {
 		var res = JSON.parse(body)
-		var recFee = res.halfHourFee;
+		var recFee = res.regular;
 		if (recFee && recFee >= opts.minfee && recFee <= opts.maxfee) {
 		  console.log("Using recommended fee ", recFee)
 		  wallet.bitcoinNetwork.feePerKb = recFee * 1000;
