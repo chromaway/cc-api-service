@@ -25,8 +25,8 @@ var coin_cache = {};
 
 function runDynamicFees (wallet, opts) {
   opts = _.assign({
-    minfee: 30,
-    maxfee: 200,
+    minfee: 10,
+    maxfee: 500,
     feeurl: "https://api.blockchain.info/mempool/fees",
     feeinterval: 60000
   }, opts)
@@ -38,9 +38,17 @@ function runDynamicFees (wallet, opts) {
 	      else if (response.statusCode === 200) {
 		var res = JSON.parse(body)
 		var recFee = res.regular;
-		if (recFee && recFee >= opts.minfee && recFee <= opts.maxfee) {
-		  console.log("Using recommended fee ", recFee)
-		  wallet.bitcoinNetwork.feePerKb = recFee * 1000;
+		if (recFee) {
+		    if (recFee < opts.minfee) {
+			console.log("Recommended fee ", recFee, " is below minimal, using minimal value ", opts.minfee);
+		        recFee = opts.minfee;
+		    } else if (recFee > opts.maxfee) {
+			console.log("Recommended fee ", recFee, " is above maximal, using maximal value ", opts.maxfee);
+		        recFee = opts.maxfee;
+		    } else {
+			console.log("Using recommended fee ", recFee);
+		    }
+  		    wallet.bitcoinNetwork.feePerKb = recFee * 1000;
 		} else {
 		  console.log("Recommended fee is out of bounds", recFee)
 		}
